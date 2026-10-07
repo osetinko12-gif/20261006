@@ -229,32 +229,46 @@ def dur(path):
 def ts(t):
     ms = int(round(t * 1000)); return f'{ms//3600000:02d}:{ms//60000%60:02d}:{ms//1000%60:02d},{ms%1000:03d}'
 
-PAD = 0.45
-clips, srt, t, n = [], [], 0.0, 0
+# 本人の録音（1本の通し録音）がある場合はそれを無加工で使い、スライドを声に合わせて切り替える
+VOICE = os.path.join(ROOT, 'voice', 'narration.m4a')
+CUTS = os.path.join(ROOT, 'voice', 'cuts.json')  # 各文の開始時刻（秒）
+
+frames = []
 for si, s in enumerate(SECTIONS):
     slide = base_slide(s)
-    slide.save(os.path.join(BUILD, f'slide{si:02d}.png'))
     for li, line in enumerate(s['lines']):
-        n += 1
-        wav = os.path.join(BUILD, f'n{si:02d}_{li:02d}.wav'); tts(line, wav)
         cur = shot_slide(slide, s, li) if s['kind'] == 'shots' else quote_slide(slide, s, li) if s['kind'] == 'quotes' else slide
         png = os.path.join(BUILD, f'f{si:02d}_{li:02d}.png'); subtitle(cur, line).save(png)
-        mp4 = os.path.join(BUILD, f'c{si:02d}_{li:02d}.mp4')
-        d = dur(wav) + PAD + (0.6 if li == len(s['lines']) - 1 else 0)
-        subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-loop', '1', '-i', png, '-i', wav,
-                        '-af', f'apad=whole_dur={d}', '-t', f'{d}', '-r', '30', '-c:v', 'libx264',
-                        '-tune', 'stillimage', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-ar', '48000',
-                        '-b:a', '192k', mp4], check=True)
-        clips.append(mp4)
-        srt.append(f'{n}\n{ts(t)} --> {ts(t + dur(wav))}\n{line}\n')
-        t += d
+        frames.append((png, line, os.path.join(BUILD, f'n{si:02d}_{li:02d}.wav')))
+
+out = os.path.join(ROOT, 'appeal_final.mp4')
+if os.path.exists(VOICE):
+    total = float(subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', VOICE],
+                                 capture_output=True, text=True).stdout)
+    starts = json.load(open(CUTS)) + [total]
+    audio = VOICE
+else:  # 録音がなければ合成音声で下書きを作る
+    starts, t = [], 0.0
+    for i, (_, line, wav) in enumerate(frames):
+        tts(line, wav); starts.append(t); t += dur(wav) + 0.45
+    starts.append(t)
+    audio = os.path.join(BUILD, 'tts.wav')
+    with open(os.path.join(BUILD, 'tts.txt'), 'w') as o:
+        o.writelines(f"file '{w}'\nduration {starts[i+1]-starts[i]:.3f}\n" for i, (_, _, w) in enumerate(frames))
+    subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i',
+                    os.path.join(BUILD, 'tts.txt'), '-af', 'apad', '-t', f'{t:.3f}', audio], check=True)
 
 with open(os.path.join(BUILD, 'list.txt'), 'w') as o:
-    o.writelines(f"file '{c}'\n" for c in clips)
-out = os.path.join(ROOT, 'appeal_final.mp4')
-subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0',
-                '-i', os.path.join(BUILD, 'list.txt'), '-c', 'copy', out], check=True)
+    for i, (png, _, _) in enumerate(frames):
+        o.write(f"file '{png}'\nduration {starts[i+1]-starts[i]:.3f}\n")
+    o.write(f"file '{frames[-1][0]}'\n")
+subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', os.path.join(BUILD, 'list.txt'),
+                '-i', audio, '-map', '0:v', '-map', '1:a', '-r', '30', '-c:v', 'libx264', '-tune', 'stillimage',
+                '-pix_fmt', 'yuv420p'] + (['-c:a', 'copy'] if audio == VOICE else ['-c:a', 'aac', '-b:a', '192k']) +
+               ['-shortest', out], check=True)
+
+srt = [f'{i+1}\n{ts(starts[i])} --> {ts(starts[i+1])}\n{line}\n' for i, (_, line, _) in enumerate(frames)]
 open(os.path.join(ROOT, 'appeal_ja.srt'), 'w', encoding='utf-8').write('\n'.join(srt))
-en = [b.split('\n')[:2] + [EN[i]] for i, b in enumerate(srt)]
-open(os.path.join(ROOT, 'appeal_en.srt'), 'w', encoding='utf-8').write('\n'.join('\n'.join(x) + '\n' for x in en))
-print(f'{out}  {t:.1f}s')
+open(os.path.join(ROOT, 'appeal_en.srt'), 'w', encoding='utf-8').write(
+    '\n'.join(f'{i+1}\n{ts(starts[i])} --> {ts(starts[i+1])}\n{EN[i]}\n' for i in range(len(frames))))
+print(f'{out}  {starts[-1]:.1f}s')
