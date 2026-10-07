@@ -31,8 +31,8 @@ def shade(c, k): return tuple(max(0, min(255, int(v * k))) for v in c)
 SKIN = (236, 188, 150)
 CAST = {
     # Cooper: wavy brown hair swept back, stubble, brown canvas jacket over a chambray shirt, jeans
-    'cooper':  dict(hair=(104, 74, 46), top=(146, 112, 72), inner=(132, 162, 192), bot=(62, 74, 104), h=30, stubble=True),
-    'cooperS': dict(hair=(104, 74, 46), top=(178, 166, 132), inner=(150, 140, 110), bot=(150, 140, 110), h=30, stubble=True),   # crew uniform
+    'cooper':  dict(hair=(104, 74, 46), top=(146, 112, 72), inner=(132, 162, 192), bot=(62, 74, 104), short=True, h=30, stubble=True),
+    'cooperS': dict(hair=(104, 74, 46), top=(178, 166, 132), inner=(150, 140, 110), bot=(150, 140, 110), short=True, h=30, stubble=True),   # crew uniform
     # young Murph: long straight brown hair
     'murph':   dict(hair=(96, 58, 34), top=(116, 128, 84), bot=(70, 70, 90), h=20, long=True),
     # adult Murph: long auburn-red hair
@@ -46,12 +46,12 @@ CAST = {
     # Amelia Brand: dark brown hair pulled back into a ponytail, crew uniform
     'brand':   dict(hair=(64, 42, 28), top=(178, 166, 132), bot=(150, 140, 110), h=28, ponytail=True),
     # Romilly: Black, short black hair, crew uniform
-    'romilly': dict(hair=(26, 22, 20), skin=(122, 80, 54), top=(178, 166, 132), bot=(150, 140, 110), h=29),
+    'romilly': dict(hair=(26, 22, 20), skin=(122, 80, 54), top=(178, 166, 132), bot=(150, 140, 110), short=True, h=29),
     # Romilly after 23 years: grey hair, full grey beard
-    'romillyO': dict(hair=(190, 190, 186), skin=(122, 80, 54), top=(178, 166, 132), bot=(150, 140, 110), h=29, beard=(196, 196, 192)),
-    'doyle':   dict(hair=(120, 90, 60), top=(178, 166, 132), bot=(150, 140, 110), h=30),
+    'romillyO': dict(hair=(190, 190, 186), skin=(122, 80, 54), top=(178, 166, 132), bot=(150, 140, 110), short=True, h=29, beard=(196, 196, 192)),
+    'doyle':   dict(hair=(120, 90, 60), top=(178, 166, 132), bot=(150, 140, 110), short=True, h=30),
     # Mann: short brown hair, scruffy beard
-    'mann':    dict(hair=(116, 86, 58), top=(178, 166, 132), bot=(150, 140, 110), h=30, beard=(120, 92, 64)),
+    'mann':    dict(hair=(116, 86, 58), top=(178, 166, 132), bot=(150, 140, 110), short=True, h=30, beard=(120, 92, 64)),
     # Donald (grandfather): white hair, glasses, plaid shirt
     'donald':  dict(hair=(230, 230, 230), top=(150, 70, 60), bot=(80, 70, 60), h=28, glasses=True),
 }
@@ -101,7 +101,8 @@ def person(d, x, y, who='cooper', face=1, pose='stand', f=0, beard=None, cry=Fal
     # head
     hy = 21
     B(-3, hy, 3, hy + 7, sk)
-    B(-3.5, hy + 5, 3.5, hy + 8, hair); B(-3.5, hy + 2, -2, hy + 7, hair)
+    if c.get('short'): B(-3.2, hy + 6, 3, hy + 8, hair); B(-3.4, hy + 3.5, -2.2, hy + 7, hair)
+    else: B(-3.5, hy + 5, 3.5, hy + 8, hair); B(-3.5, hy + 2, -2, hy + 7, hair)
     if c.get('long'): B(-3.5, hy - 3, -1.5, hy + 6, hair); B(-2, hy - 2, -1, hy + 1, hair)
     if c.get('ponytail'): B(-5, hy + 1, -3.5, hy + 6, hair); B(-5.5, hy - 2, -4.5, hy + 2, hair)
     d.point((X(1.6), Y(hy + 3.6)), fill=(30, 24, 20))
@@ -333,7 +334,12 @@ def portrait(d, cx, by, who='cooper', s=1, cry=False, beard=None, grey=False, sm
     if c.get('inner'): B(-3, 0, 3, 7, c['inner'])
     if c.get('ponytail'): B(-10, 8, -7, 22, hair)
     B(-7, 10, 7, 25, sk); B(-7, 10, -5, 25, shade(sk, .92))
-    B(-8, 21, 8, 27, hair); B(-8, 13, -6, 24, hair); B(6, 15, 8, 24, hair)
+    if c.get('short'):
+        B(-7, 23.5, 7, 27, hair); B(-6, 27, 5, 27.6, hair)
+        B(-7.6, 18, -6.6, 25, hair); B(6.6, 19, 7.6, 25, hair)
+        B(-3, 26.5, 4, 27, shade(hair, 1.3)); B(-6, 24, -3, 23.5, hair)
+    else:
+        B(-8, 21, 8, 27, hair); B(-8, 13, -6, 24, hair); B(6, 15, 8, 24, hair)
     if c.get('long'): B(-9, 4, -6, 22, hair); B(6, 4, 9, 22, hair)
     if c.get('ponytail'): B(-8, 22, 8, 27, hair); B(-2, 25, 2, 26, shade(hair, 1.25))
     B(-4, 18, -2, 17, (30, 24, 20)); B(2, 18, 4, 17, (30, 24, 20))
