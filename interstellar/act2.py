@@ -113,8 +113,8 @@ def stars_box(d, x0, y0, x1, y1, seed=2):
 
 def s17_23years(t):                   # back aboard: Romilly has aged 23 years
     im, d = zcanvas(); ship_interior(d)
-    portrait(d, 150, 100, 'romilly', 2, beard=(205, 205, 205), grey=True)
-    person(d, 62, 100, 'cooper', 1); person(d, 42, 100, 'brand', 1)
+    portrait(d, 150, 100, 'romillyO', 2)
+    person(d, 62, 100, 'cooperS', 1); person(d, 42, 100, 'brand', 1)
     if t > 3: bubble(d, 56, 58, '!')
     # hourglass
     hx, hy = 100, 30
@@ -133,7 +133,7 @@ def s18_messages(t):                  # 23 years of messages from home
     who, kw = [('tom', {}), ('tomA', {}), ('tomA', dict(beard=(150, 110, 60))), ('murphA', dict(cry=True))][k]
     portrait(d, 82, 80, who, 2, **kw)
     for y in range(14, 80, 3): d.line([28, y, 136, y], fill=(70, 76, 84)) if (y + int(t * 30)) % 9 == 0 else None
-    portrait(d, 172, 108, 'cooper', 1.6, cry=True)
+    portrait(d, 172, 108, 'cooperS', 1.6, cry=True)
     return up(im)
 
 def s19_murph(t):                     # on Earth: grown-up Murph at the professor's bedside

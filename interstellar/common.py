@@ -30,22 +30,36 @@ def shade(c, k): return tuple(max(0, min(255, int(v * k))) for v in c)
 # ------------------------------------------------------------------ people
 SKIN = (236, 188, 150)
 CAST = {
-    'cooper':  dict(hair=(92, 64, 40),  top=(120, 128, 92),  bot=(70, 74, 92),  h=30),
-    'murph':   dict(hair=(110, 62, 34), top=(200, 120, 60),  bot=(80, 90, 120), h=20, long=True),
-    'murphA':  dict(hair=(120, 64, 34), top=(90, 100, 120),  bot=(50, 50, 64),  h=29, long=True),
-    'murphO':  dict(hair=(225, 225, 225), top=(235, 235, 240), bot=(235, 235, 240), h=29, long=True),
-    'tom':     dict(hair=(150, 110, 60), top=(180, 60, 50),  bot=(70, 74, 92),  h=24),
-    'tomA':    dict(hair=(150, 110, 60), top=(140, 60, 50),  bot=(70, 74, 92),  h=30),
-    'prof':    dict(hair=(220, 220, 220), top=(70, 70, 80),  bot=(60, 60, 70),  h=29),
-    'brand':   dict(hair=(220, 190, 110), top=(90, 100, 120), bot=(60, 64, 80), h=28, long=True),
-    'romilly': dict(hair=(30, 24, 20),  top=(90, 100, 120),  bot=(60, 64, 80),  h=29),
-    'mann':    dict(hair=(120, 90, 60), top=(90, 100, 120),  bot=(60, 64, 80),  h=30),
-    'donald':  dict(hair=(230, 230, 230), top=(130, 110, 80), bot=(80, 70, 60), h=28),
+    # Cooper: wavy brown hair swept back, stubble, brown canvas jacket over a chambray shirt, jeans
+    'cooper':  dict(hair=(104, 74, 46), top=(146, 112, 72), inner=(132, 162, 192), bot=(62, 74, 104), h=30, stubble=True),
+    'cooperS': dict(hair=(104, 74, 46), top=(178, 166, 132), inner=(150, 140, 110), bot=(150, 140, 110), h=30, stubble=True),   # crew uniform
+    # young Murph: long straight brown hair
+    'murph':   dict(hair=(96, 58, 34), top=(116, 128, 84), bot=(70, 70, 90), h=20, long=True),
+    # adult Murph: long auburn-red hair
+    'murphA':  dict(hair=(172, 72, 40), top=(70, 80, 100), bot=(50, 50, 64), h=29, long=True),
+    'murphO':  dict(hair=(232, 232, 232), top=(236, 236, 240), bot=(236, 236, 240), h=29, long=True),
+    'tom':     dict(hair=(118, 84, 52), top=(176, 64, 52), bot=(70, 74, 92), h=24),
+    # adult Tom: dark brown hair and beard
+    'tomA':    dict(hair=(70, 50, 34), top=(120, 96, 66), bot=(70, 74, 92), h=30, beard=(70, 50, 34)),
+    # Professor Brand: white hair, glasses, dark suit
+    'prof':    dict(hair=(226, 226, 226), top=(58, 58, 68), inner=(220, 220, 220), bot=(54, 54, 62), h=29, glasses=True),
+    # Amelia Brand: dark brown hair pulled back into a ponytail, crew uniform
+    'brand':   dict(hair=(64, 42, 28), top=(178, 166, 132), bot=(150, 140, 110), h=28, ponytail=True),
+    # Romilly: Black, short black hair, crew uniform
+    'romilly': dict(hair=(26, 22, 20), skin=(122, 80, 54), top=(178, 166, 132), bot=(150, 140, 110), h=29),
+    # Romilly after 23 years: grey hair, full grey beard
+    'romillyO': dict(hair=(190, 190, 186), skin=(122, 80, 54), top=(178, 166, 132), bot=(150, 140, 110), h=29, beard=(196, 196, 192)),
+    'doyle':   dict(hair=(120, 90, 60), top=(178, 166, 132), bot=(150, 140, 110), h=30),
+    # Mann: short brown hair, scruffy beard
+    'mann':    dict(hair=(116, 86, 58), top=(178, 166, 132), bot=(150, 140, 110), h=30, beard=(120, 92, 64)),
+    # Donald (grandfather): white hair, glasses, plaid shirt
+    'donald':  dict(hair=(230, 230, 230), top=(150, 70, 60), bot=(80, 70, 60), h=28, glasses=True),
 }
 
 def person(d, x, y, who='cooper', face=1, pose='stand', f=0, beard=None, cry=False, tilt=0):
     """x = centre, y = feet."""
     c = CAST[who]; h = c['h']; s = h / 30
+    sk = c.get('skin', SKIN); beard = beard or c.get('beard')
     X = lambda dx: x + dx * face * s
     Y = lambda dy: y - dy * s
     def B(a, b, cc, e, col): R(d, X(a), Y(b), X(cc), Y(e), col)
@@ -64,26 +78,29 @@ def person(d, x, y, who='cooper', face=1, pose='stand', f=0, beard=None, cry=Fal
         B(-2.5, 0, -0.5, 1, (40, 34, 30)); B(0.5, 0, 3, 1, (40, 34, 30))
     # torso
     B(-3.5, 10, 3.5, 21, top); B(-3.5, 10, -1.5, 21, shade(top, .82))
-    if who == 'cooper': B(-0.5, 20, 1, 15, (200, 190, 160))
+    if c.get('inner'): B(0, 20.5, 2.5, 11, c['inner'])
     # arms
     if pose in ('reach', 'give'):
-        B(2.5, 19, 9, 17, top); B(9, 19, 10.5, 17, SKIN)
+        B(2.5, 19, 9, 17, top); B(9, 19, 10.5, 17, sk)
     elif pose == 'wave':
-        B(2.5, 20, 4.5, 28, top); B(3, 28, 4.5, 30, SKIN)
+        B(2.5, 20, 4.5, 28, top); B(3, 28, 4.5, 30, sk)
     elif pose == 'arms_up':
-        B(-5, 20, -3.5, 28, top); B(3.5, 20, 5, 28, top); B(-5, 28, -3.5, 30, SKIN); B(3.5, 28, 5, 30, SKIN)
+        B(-5, 20, -3.5, 28, top); B(3.5, 20, 5, 28, top); B(-5, 28, -3.5, 30, sk); B(3.5, 28, 5, 30, sk)
     elif pose == 'run':
         sw = [3, 0, -3, 0][int(f) % 4]
         B(1 + sw, 19, 3 + sw, 13, top); B(-3 - sw, 19, -1 - sw, 13, shade(top, .8))
     else:
-        B(2.5, 20, 4, 12, top); B(2.5, 12, 4, 11, SKIN)
+        B(2.5, 20, 4, 12, top); B(2.5, 12, 4, 11, sk)
     # head
     hy = 21
-    B(-3, hy, 3, hy + 7, SKIN)
+    B(-3, hy, 3, hy + 7, sk)
     B(-3.5, hy + 5, 3.5, hy + 8, hair); B(-3.5, hy + 2, -2, hy + 7, hair)
-    if c.get('long'): B(-3.5, hy - 2, -1.5, hy + 6, hair)
+    if c.get('long'): B(-3.5, hy - 3, -1.5, hy + 6, hair); B(-2, hy - 2, -1, hy + 1, hair)
+    if c.get('ponytail'): B(-5, hy + 1, -3.5, hy + 6, hair); B(-5.5, hy - 2, -4.5, hy + 2, hair)
     d.point((X(1.6), Y(hy + 3.6)), fill=(30, 24, 20))
-    if beard: B(-1, hy, 3, hy + 2.5, beard)
+    if c.get('glasses'): B(0.5, hy + 4.2, 3, hy + 4.2, (40, 40, 40))
+    if c.get('stubble') and not beard: B(-1, hy, 3, hy + 1, shade(sk, .82))
+    if beard: B(-1.5, hy - 0.5, 3, hy + 2.5, beard)
     if cry: d.point((X(1.6), Y(hy + 2.2)), fill=(120, 190, 255)); d.point((X(1.6), Y(hy + 1.2)), fill=(120, 190, 255))
 
 def lie(d, x, y, who, face=1):
@@ -302,13 +319,19 @@ def zroom(d, light=(240, 210, 150), dark=False, dust=0.0, t=0.0):
 def portrait(d, cx, by, who='cooper', s=1, cry=False, beard=None, grey=False, smile=False):
     """Head-and-shoulders bust. cx = centre, by = bottom edge. ~ 26*s tall."""
     c = CAST[who]; hair = (210, 210, 210) if grey else c['hair']
+    sk = c.get('skin', SKIN); beard = beard or c.get('beard')
     def B(a, b, cc, e, col): R(d, cx + a * s, by - b * s, cx + cc * s, by - e * s, col)
-    B(-12, 0, 12, 8, c['top']); B(-12, 0, -6, 8, shade(c['top'], .8)); B(-3, 8, 3, 11, SKIN)
-    B(-7, 10, 7, 25, SKIN); B(-7, 10, -5, 25, shade(SKIN, .92))
+    B(-12, 0, 12, 8, c['top']); B(-12, 0, -6, 8, shade(c['top'], .8)); B(-3, 8, 3, 11, sk)
+    if c.get('inner'): B(-3, 0, 3, 7, c['inner'])
+    if c.get('ponytail'): B(-10, 8, -7, 22, hair)
+    B(-7, 10, 7, 25, sk); B(-7, 10, -5, 25, shade(sk, .92))
     B(-8, 21, 8, 27, hair); B(-8, 13, -6, 24, hair); B(6, 15, 8, 24, hair)
-    if c.get('long'): B(-9, 6, -6, 22, hair); B(6, 6, 9, 22, hair)
+    if c.get('long'): B(-9, 4, -6, 22, hair); B(6, 4, 9, 22, hair)
+    if c.get('ponytail'): B(-8, 22, 8, 27, hair); B(-2, 25, 2, 26, shade(hair, 1.25))
     B(-4, 18, -2, 17, (30, 24, 20)); B(2, 18, 4, 17, (30, 24, 20))
     B(-4, 20, -1, 19.5, shade(hair, .8)); B(1, 20, 4, 19.5, shade(hair, .8))
+    if c.get('glasses'): B(-5, 19, -1, 16, (40, 40, 40)); B(1, 19, 5, 16, (40, 40, 40)); B(-4, 18.5, -2, 16.5, (200, 220, 230)); B(2, 18.5, 4, 16.5, (200, 220, 230)); B(-1, 18, 1, 17.5, (40, 40, 40))
+    if c.get('stubble') and not beard: B(-6, 10, 6, 13, shade(sk, .85))
     if smile: B(-2, 13, 2, 12.5, (150, 70, 60))
     else: B(-2, 13, 2, 12.5, (170, 110, 90))
     if beard: B(-7, 10, 7, 14, beard); B(-3, 13, 3, 12, (150, 70, 60))

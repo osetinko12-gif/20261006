@@ -99,14 +99,14 @@ def s34_family(t):                    # old Murph, surrounded by her family
         if who == 'cooper': continue
         person(d, 40 + k * 14, 100, who, 1)
     walk = clamp(t / 6)
-    person(d, 180 - walk * 30, 100, 'cooper', -1, 'walk' if walk < 1 else 'stand', f=t * 6)
+    person(d, 180 - walk * 30, 100, 'cooperS', -1, 'walk' if walk < 1 else 'stand', f=t * 6)
     return up(im)
 
 def s35_hands(t):                     # father, younger than his daughter
     im, d = zcanvas((40, 44, 56))
     grad(d, 0, ZH, (210, 196, 176), (150, 136, 120), 0, ZW)
     portrait(d, 54, 108, 'murphO', 2.2, grey=True, cry=t > 2, smile=t > 6)
-    portrait(d, 140, 108, 'cooper', 2.2, cry=t > 2)
+    portrait(d, 140, 108, 'cooperS', 2.2, cry=t > 2)
     R(d, 82, 92, 112, 98, SKIN); R(d, 96, 90, 98, 100, shade(SKIN, .85))
     if t > 7: bubble(d, 90, 22, 'heart')
     return up(im)

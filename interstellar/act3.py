@@ -22,7 +22,7 @@ def s21_mann(t):                      # the hero wakes from cryosleep
     R(d, 20, 50, 110, 80, (220, 226, 232)); R(d, 22, 52, 108, 66, (150, 200, 230))
     portrait(d, 66, 72, 'mann', 1.4, cry=t > 2, beard=(140, 110, 80))
     for k in range(int(t * 8) % 20): d.point((24 + (k * 13) % 84, 54 + (k * 7) % 12), fill=(240, 250, 255))
-    person(d, 140, 100, 'cooper', -1); person(d, 160, 100, 'brand', -1)
+    person(d, 140, 100, 'cooperS', -1); person(d, 160, 100, 'brand', -1)
     return up(im)
 
 def s22_betrayal(t):                  # on the ridge: Mann turns on Cooper
