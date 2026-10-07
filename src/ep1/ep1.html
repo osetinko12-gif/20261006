@@ -1,0 +1,331 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Mincho;src:url(../fonts/ShipporiMinchoB1-Medium.ttf);font-weight:500}
+@font-face{font-family:Mincho;src:url(../fonts/ShipporiMinchoB1-ExtraBold.ttf);font-weight:800}
+html,body{margin:0;background:#000;overflow:hidden}
+canvas{display:block}
+</style></head>
+<body><canvas id="c" width="1920" height="1080"></canvas>
+<script>Math.random=(()=>{let s=20261006;return()=>{s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}})();</script>
+<script src="../cave.js"></script>
+<script src="animals.js"></script>
+<script>
+// 第1話 オープニング後〜第1章「氷河期の世界」。時刻 t は冷やし（sample_30s）の直後を 0 とする
+const MAIN=ctx;
+const CREAM='244,232,210',OCHRE='226,170,120',DARK='rgb(38,26,18)';
+let TL,MAP;const LINE={};
+const at=(id,f=0)=>{const l=LINE[id];return l.t0+(l.t1-l.t0-0.3)*f};
+const atStr=(id,s)=>{const l=LINE[id];const i=l.text.indexOf(s);if(i<0)throw new Error('no '+s+' in '+id);return at(id,i/l.text.length)};
+const SC=n=>TL.scenes.find(s=>s.name===n);
+const fadeIn=(t,t0,d=0.6)=>ease((t-t0)/d);
+const win=(t,t0,t1,d=0.5)=>ease((t-t0)/d)*(1-ease((t-t1)/d));
+function txt(s,x,y,size,o={}){ctx.save();ctx.font=`${o.weight||500} ${size}px Mincho`;ctx.textAlign=o.align||'center';ctx.textBaseline='middle';
+ ctx.globalAlpha=(o.alpha??1);ctx.shadowColor='rgba(0,0,0,0.85)';ctx.shadowBlur=o.blur??14;ctx.fillStyle=`rgb(${o.color||CREAM})`;
+ if(o.ls){ctx.letterSpacing=o.ls+'px'}ctx.fillText(s,x,y);ctx.restore()}
+function note(s,a=1){txt(s,W-48,52,24,{align:'right',alpha:0.6*a,color:'232,220,198',blur:8})}
+function camMove(t,keys){// keys: [[time,cx,cy,z,dur]]  dur秒かけて移動
+ let c=keys[0].slice(1,4);for(let i=1;i<keys.length;i++){const[k0,x,y,z,d=1.6]=keys[i];if(t<k0)break;const k=ease((t-k0)/d);c=[lerp(c[0],x,k),lerp(c[1],y,k),lerp(c[2],z,k)]}return c}
+function torchLight(sx,sy,R,I,warm=1){
+ const lg=ctx.createRadialGradient(sx,sy,0,sx,sy,R*1.25);
+ lg.addColorStop(0,`rgb(${Math.min(255,255*I)},${Math.min(255,222*I)},${Math.min(255,170*I)})`);
+ lg.addColorStop(0.35,`rgb(${Math.min(255,235*I)},${Math.min(255,170*I)},${Math.min(255,105*I)})`);
+ lg.addColorStop(0.7,`rgb(${120*I},${60*I},${24*I})`);lg.addColorStop(1,'rgb(0,0,0)');
+ ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='multiply';ctx.fillStyle=lg;ctx.fillRect(0,0,W,H);
+ ctx.globalCompositeOperation='lighter';const gl=ctx.createRadialGradient(sx,sy,0,sx,sy,R*0.9);gl.addColorStop(0,`rgba(255,150,60,${0.08*I*warm})`);gl.addColorStop(1,'rgba(255,120,40,0)');ctx.fillStyle=gl;ctx.fillRect(0,0,W,H);ctx.restore()}
+function darkBg(c='#120c09'){ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle=c;ctx.fillRect(0,0,W,H);
+ const g=ctx.createRadialGradient(W/2,H/2,100,W/2,H/2,1100);g.addColorStop(0,'rgba(70,45,28,0.55)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
+function label(s,x,y,a,o={}){if(a<=0)return;txt(s,x,y,o.size||34,{alpha:a,color:o.color||CREAM,align:o.align,weight:o.weight})}
+function leader(x0,y0,x1,y1,a){if(a<=0)return;ctx.save();ctx.globalAlpha=a*0.8;ctx.strokeStyle=`rgb(${CREAM})`;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(lerp(x0,x1,a),lerp(y0,y1,a));ctx.stroke();ctx.restore()}
+
+// ================= 1. intro / 15. outro: 冷やしの洞窟 =================
+function caveWorld(t,cx,cy,z,R,I){ctx.setTransform(z,0,0,z,W/2-cx*z,H/2-cy*z);ctx.drawImage(world,0,0);
+ ctx.globalCompositeOperation='multiply';ctx.drawImage(legsA,bisonO.x,bisonO.y);ctx.globalCompositeOperation='source-over';
+ const tx=W/2+Math.sin(t*0.9)*60+n1(t*0.5,1)*50-25,ty=H/2+Math.cos(t*0.7)*30+30;torchLight(tx,ty,R*z,I);ctx.setTransform(1,0,0,1,0,0)}
+function sIntro(t){const s=SC('intro');const k=ease((t-s.t0+1)/14);
+ caveWorld(t,lerp(620,1900,k),lerp(560,470,k),lerp(1.15,0.95,k),620,flick(t,0.05));
+ const a=win(t,at('n01',0.25),SC('timeline').t0-0.2);label('ショーヴェ洞窟　フランス南部',96,96,a,{align:'left',size:36});label('約3万6000年前',96,146,a,{align:'left',size:28,color:OCHRE});note('※ 図版はイメージ再現')}
+function sOutro(t){const s=SC('outro');const k=ease((t-s.t0)/24);
+ const dim=1-ease((t-at('n33',0.3))/5);
+ caveWorld(t,lerp(2500,2880,k),lerp(640,690,k),lerp(1.0,1.3,k),lerp(300,560,ease((t-s.t0)/3))*dim+1,flick(t,0.06));
+ const q=at('n32',0);txt('何のために？',W/2,470,110,{weight:800,alpha:win(t,q,at('n33',0.2),0.8),ls:10});
+ const e=at('n33',0.75);txt('次章',W/2,440,32,{color:OCHRE,alpha:win(t,e,s.t1-1.0,0.8)});txt('発見の物語',W/2,520,72,{weight:800,alpha:win(t,e+0.3,s.t1-1.0,0.8),ls:8});
+ note('※ 図版はイメージ再現',1-ease((t-at('n33',0.5))/1))}
+
+// ================= 2. timeline =================
+function sTimeline(t){darkBg();const s=SC('timeline');const x0=170,x1=1750,y=560;const X=ya=>x0+(36000-ya)/36000*(x1-x0);
+ const p=easeOut((t-s.t0-0.2)/1.6);
+ ctx.strokeStyle=`rgba(${CREAM},0.85)`;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(lerp(x0,x1,p),y);ctx.stroke();
+ for(let ya=35000;ya>=0;ya-=5000){const x=X(ya);if(x>lerp(x0,x1,p))break;ctx.fillStyle=`rgba(${CREAM},0.5)`;ctx.fillRect(x-1,y-10,2,20);
+  if(ya>0&&ya<35000)txt(`${ya/10000>=1?(ya/10000)+'万':ya}年前`.replace('5000年前','5000年前'),x,y+44,22,{alpha:0.5})}
+ txt('いま',x1,y+44,26,{alpha:p});
+ // ショーヴェ
+ const a1=fadeIn(t,s.t0+0.4);ctx.fillStyle=`rgba(${OCHRE},${a1})`;ctx.beginPath();ctx.arc(x0,y,12,0,7);ctx.fill();
+ txt('約3万6000年前',x0,y-120,34,{align:'left',alpha:a1,color:OCHRE});txt('洞窟の絵',x0,y-70,44,{align:'left',alpha:a1,weight:800});
+ // 文字
+ const tw=atStr('n02','文字');const a2=fadeIn(t,tw-0.1);const xw=X(5200);
+ ctx.fillStyle=`rgba(${OCHRE},${0.25*a2})`;ctx.fillRect(xw,y-26,(x1-xw)*easeOut((t-tw)/0.8),52);
+ ctx.fillStyle=`rgba(${CREAM},${a2})`;ctx.beginPath();ctx.arc(xw,y,10,0,7);ctx.fill();
+ txt('約5000年前',xw,y-120,30,{alpha:a2,color:OCHRE});txt('文字の誕生',xw,y-72,40,{alpha:a2,weight:800});
+ // 3万年以上
+ const tb=atStr('n02','3万年以上');const a3=easeOut((t-tb)/1.0);if(a3>0){ctx.strokeStyle=`rgba(${OCHRE},0.9)`;ctx.lineWidth=3;const yb=y+100;
+  ctx.beginPath();ctx.moveTo(x0,yb-14);ctx.lineTo(x0,yb);ctx.lineTo(lerp(x0,xw,a3),yb);if(a3>0.98){ctx.lineTo(xw,yb-14)}ctx.stroke();
+  txt('3万年以上',(x0+xw)/2,yb+50,48,{weight:800,alpha:fadeIn(t,tb+0.5),color:OCHRE})}}
+
+// ================= 3. series =================
+const EPS=['最初の一筆','エジプト・メソポタミア','ギリシャ','ヘレニズム・ローマ','初期キリスト教・ビザンティン','ロマネスク・ゴシック','初期ルネサンス','盛期ルネサンス','ヴェネツィア派・マニエリスム','北方ルネサンス','バロック','オランダ黄金時代','ベラスケスからゴヤ','ロココ・新古典主義','ロマン主義','写実主義と写真','印象派','ポスト印象派','世紀末','フォーヴィスム・表現主義','抽象の誕生','キュビスム・シュルレアリスム','戦争と美術'];
+function sSeries(t){darkBg();const s=SC('series');
+ txt('西洋美術史　全23話',W/2,130,46,{weight:800,alpha:fadeIn(t,s.t0+0.2),ls:6});
+ const r0=at('n03',0.08),r1=at('n03',0.85);const dimT=at('n04',0);const dim=ease((t-dimT)/0.8);
+ const cw=272,ch=124,gx=20,gy=22,cols=6,ox=(W-(cols*cw+(cols-1)*gx))/2,oy=210;
+ EPS.forEach((e,i)=>{const ti=lerp(r0,r1,i/22);const a=easeOut((t-ti)/0.5);if(a<=0)return;const x=ox+(i%cols)*(cw+gx),y=oy+Math.floor(i/cols)*(ch+gy)+(1-a)*16;
+  const al=a*(i===0?1:1-dim*0.75);ctx.globalAlpha=al;ctx.fillStyle=i===0?'rgba(120,70,36,0.55)':'rgba(255,240,215,0.06)';ctx.fillRect(x,y,cw,ch);
+  ctx.strokeStyle=i===0?`rgba(${OCHRE},0.95)`:`rgba(${CREAM},0.25)`;ctx.lineWidth=i===0?3:1.5;ctx.strokeRect(x,y,cw,ch);ctx.globalAlpha=1;
+  txt(`第${i+1}話`,x+18,y+30,22,{align:'left',alpha:al,color:OCHRE,blur:0});
+  const fs=Math.min(30,Math.floor(236/e.length));txt(e,x+18,y+80,fs,{align:'left',alpha:al,blur:0,weight:i===0?800:500})});
+ const q=fadeIn(t,atStr('n04','ひとつ'),0.8);if(q>0){ctx.fillStyle=`rgba(10,6,4,${0.55*q})`;ctx.fillRect(0,780,W,150);txt('毎回ひとつの「問い」から',W/2,855,56,{weight:800,alpha:q,ls:4})}}
+
+// ================= 4. four =================
+function sFour(t){darkBg();const s=SC('four');
+ txt('作品を読む　4つの手がかり',W/2,140,44,{weight:800,alpha:fadeIn(t,s.t0+0.2),ls:4});
+ const items=[['誰が','お金を出したのか','誰が'],['何のために','描かれたのか','何のため'],['どんな','道具と技術で','どんな道具'],['その時代に','何が起きていたか','そして']];
+ items.forEach(([a,b,k],i)=>{const ti=atStr('n05',k)-0.15;const p=easeOut((t-ti)/0.7);if(p<=0)return;const x=i%2?1380:540,y=i<2?380:690;
+  ctx.globalAlpha=p;ctx.strokeStyle=`rgba(${OCHRE},0.7)`;ctx.lineWidth=2;ctx.strokeRect(x-330,y-120,660,240);ctx.globalAlpha=1;
+  txt(['一','二','三','四'][i],x-280,y-78,30,{color:OCHRE,alpha:p,blur:0});
+  txt(a,x,y-36+(1-p)*16,70,{weight:800,alpha:p,ls:4});txt(b,x,y+50+(1-p)*16,40,{alpha:p})})}
+
+// ================= 5. question =================
+let stencilCv,qRock;
+function sQuestion(t){const s=SC('question');ctx.setTransform(1,0,0,1,0,0);const z=1+0.06*ease((t-s.t0)/30);
+ ctx.save();ctx.translate(W/2,H/2);ctx.scale(z,z);ctx.translate(-W/2,-H/2);ctx.drawImage(qRock,0,0);ctx.globalCompositeOperation='multiply';ctx.drawImage(stencilCv,480-450,540-450);ctx.restore();
+ torchLight(560+Math.sin(t*0.8)*30,560,820,flick(t,0.04),0.6);
+ ctx.fillStyle='rgba(0,0,0,0.25)';ctx.fillRect(0,0,W,H);
+ const a0=win(t,at('n06',0),s.t1-0.6,0.6);txt('第1話の問い',930,330,38,{align:'left',color:OCHRE,alpha:a0});
+ if(a0>0){ctx.fillStyle=`rgba(${OCHRE},${a0*0.8})`;ctx.fillRect(930,370,lerp(0,560,easeOut((t-at('n06',0))/1.2)),2)}
+ telop('人は、なぜ',930,480,86,t,at('n07',0),s.t1-0.6,{weight:800,align:'left',per:0.09});
+ telop('絵を描きはじめたのか',930,615,86,t,atStr('n07','絵'),s.t1-0.6,{weight:800,align:'left',per:0.09});
+ note('※ 図版はイメージ再現')}
+
+// ================= 6. chapter =================
+function sChapter(t){const s=SC('chapter');ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);const l=t-s.t0;const out=1-ease((l-(s.t1-s.t0-0.9))/0.8);
+ txt('第1章',W/2,410,46,{color:OCHRE,alpha:fadeIn(l,0.4,0.8)*out,ls:10});
+ telop('氷河期の世界',W/2,540,124,t,s.t0+0.8,s.t1-0.9,{weight:800,per:0.12,ls:0.14});
+ const lw=easeOut((l-1.4)/1.2)*620;ctx.globalAlpha=out;ctx.fillStyle=`rgba(${OCHRE},0.9)`;ctx.fillRect(W/2-lw/2,640,lw,2);ctx.globalAlpha=1}
+
+// ================= 7. panel: ショーヴェの動物たち =================
+let panel;const PW=2900;
+const PANEL=[['lion',470,720,1.6,{flip:true,seed:11}],['lion',800,640,1.45,{flip:true,seed:12}],['rhino',1420,730,1.55,{flip:true,seed:21}],['mammoth',2040,770,1.4,{flip:true,seed:31}],['bear',2620,730,1.55,{flip:true,seed:41}]];
+function buildPanel(){panel=mk(PW,1080);const g=panel.getContext('2d');g.drawImage(rockOnly,500,60,PW,1080,0,0,PW,1080);
+ for(const[n,x,y,s,o]of PANEL){const L=paintLayer(900,640,q=>drawAnimal(q,n,450,560,s,{...o,mode:'cave',fill:'rgba(140,70,30,0.25)',line:6}));g.globalCompositeOperation='multiply';g.drawImage(L,x-450,y-560);g.globalCompositeOperation='source-over'}}
+function sPanel(t){const s=SC('panel');
+ const c=camMove(t,[[0,640,560,1.05],[atStr('n10','サイ')-0.3,1400,560,1.0,1.4],[atStr('n10','マンモス')-0.3,2000,540,1.0,1.4],[atStr('n10','クマ')-0.3,2500,560,1.0,1.4],[at('n11',0.05),1500,560,0.66,2.4]]);
+ ctx.setTransform(c[2],0,0,c[2],W/2-c[0]*c[2],H/2-c[1]*c[2]);ctx.drawImage(panel,0,0);
+ const dim=1-0.85*ease((t-at('n12',0.3))/3);
+ torchLight(W/2+Math.sin(t*0.8)*40,H/2+20,lerp(700,1250,ease((t-at('n11',0.05))/2.4))*dim+1,flick(t,0.05)*lerp(1,0.6,1-dim));
+ const P=(x,y)=>[(x-c[0])*c[2]+W/2,(y-c[1])*c[2]+H/2];
+ const labs=[['ホラアナライオン',640,'ライオン'],['ケサイ（毛の長いサイ）',1420,'サイ'],['マンモス',2040,'マンモス'],['ホラアナグマ',2620,'クマ']];
+ ctx.setTransform(1,0,0,1,0,0);
+ for(const[nm,x,k]of labs){const a=win(t,atStr('n10',k)+0.1,at('n12',0.4),0.5);const[px,py]=P(x,800);label(nm,px,py+24,a,{size:32,weight:800})}
+ const b=win(t,at('n11',0.2),at('n12',0.3),0.6);if(b>0){ctx.fillStyle=`rgba(10,6,4,${0.5*b})`;ctx.fillRect(0,110,W,110);txt('いまのフランスにはいない動物たち',W/2,165,46,{weight:800,alpha:b})}
+ note('※ 図版はイメージ再現')}
+
+// ================= 8. map =================
+let landP,deepP,iceP,alpsP,pyrP,mapTex,refugeOK=0;
+function buildMap(){const toP=polys=>{const p=new Path2D();for(const poly of polys)for(const ring of poly){ring.forEach(([x,y],i)=>i?p.lineTo(x,y):p.moveTo(x,y));p.closePath()}return p};
+ landP=toP(MAP.land);deepP=toP(MAP.deep);iceP=smoothPath(MAP.ice,true,0.4);alpsP=smoothPath(MAP.alps,true,0.5);pyrP=smoothPath(MAP.pyr,true,0.5);
+ mapTex=mk(1024,1024);const g=mapTex.getContext('2d');const id=g.createImageData(1024,1024);for(let y=0;y<1024;y++)for(let x=0;x<1024;x++){const v=fbm(n1,x/40,y/40,5);const i=(y*1024+x)*4;id.data[i]=id.data[i+1]=id.data[i+2]=128+(v-0.5)*160;id.data[i+3]=255}g.putImageData(id,0,0)}
+const SEA='#141d22',LAND='#6e5236',SHELF='#5d5338';
+function drawMap(st){const[cx,cy,z]=st.cam;ctx.setTransform(z,0,0,z,W/2-cx*z,H/2-cy*z);
+ ctx.fillStyle=SEA;ctx.fillRect(-600,-400,3200,2000);
+ if(st.lgm>0){ctx.save();ctx.globalAlpha=st.lgm;const p=new Path2D();p.rect(-600,-400,3200,2000);p.addPath(deepP);ctx.fillStyle=SHELF;ctx.fill(p,'evenodd');ctx.restore()}
+ ctx.fillStyle=LAND;ctx.fill(landP,'evenodd');
+ ctx.save();ctx.clip(landP,'evenodd');ctx.globalCompositeOperation='overlay';ctx.globalAlpha=0.35;ctx.drawImage(mapTex,-600,-400,3200,2000);ctx.restore();
+ ctx.strokeStyle='rgba(235,205,150,0.55)';ctx.lineWidth=1.4/z;ctx.stroke(landP);
+ if(st.lgm>0){ctx.save();ctx.globalAlpha=st.lgm*0.9;ctx.strokeStyle='rgba(200,225,235,0.8)';ctx.setLineDash([6/z,5/z]);ctx.lineWidth=1.6/z;ctx.stroke(deepP);ctx.restore()}
+ const ice=(path,prog,ox,oy,r)=>{if(prog<=0)return;ctx.save();ctx.beginPath();ctx.arc(ox,oy,r*easeOut(prog),0,7);ctx.clip();
+  ctx.shadowColor='rgba(220,240,255,0.6)';ctx.shadowBlur=24;ctx.fillStyle='rgba(232,240,244,0.94)';ctx.fill(path);ctx.shadowBlur=0;
+  ctx.clip(path);ctx.globalCompositeOperation='multiply';ctx.globalAlpha=0.25;ctx.drawImage(mapTex,-600,-400,3200,2000);ctx.restore()};
+ const sc=MAP.sites.scand;ice(iceP,st.ice,sc[0],sc[1],1500);ice(alpsP,st.alps,MAP.sites.alps[0],MAP.sites.alps[1],260);
+ if(st.dim>0){ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle=`rgba(0,0,0,${0.55*st.dim})`;ctx.fillRect(0,0,W,H);ctx.restore()}
+ if(st.refuge>0){const[rx,ry]=MAP.sites.refuge;const r=ctx.createRadialGradient(rx,ry,0,rx,ry,150);r.addColorStop(0,`rgba(255,190,110,${0.55*st.refuge})`);r.addColorStop(1,'rgba(255,170,90,0)');
+  ctx.save();ctx.globalCompositeOperation='lighter';ctx.fillStyle=r;ctx.beginPath();ctx.ellipse(rx,ry,170,95,-0.15,0,7);ctx.fill();ctx.restore()}
+ ctx.setTransform(1,0,0,1,0,0)}
+const mapPt=([x,y],c)=>[(x-c[0])*c[2]+W/2,(y-c[1])*c[2]+H/2];
+function sMap(t){const s=SC('map');
+ const tz=atStr('n17','とくに');
+ const cam=camMove(t,[[0,960,540,1],[tz,MAP.sites.refuge[0]+60,MAP.sites.refuge[1]-20,1.75,2.6]]);
+ const st={cam,lgm:ease((t-at('n16',0.15))/2.5),ice:(t-at('n14',0))/3.2,alps:(t-at('n15',0))/1.6,dim:ease((t-at('n17',0.1))/1.2),refuge:ease((t-at('n17',0.15))/1.5)};
+ drawMap(st);
+ // 見出し
+ const h=fadeIn(t,at('n13',0.2),0.8);ctx.fillStyle=`rgba(10,6,4,${0.6*h})`;ctx.fillRect(60,64,560,140);
+ txt('約2万年前',96,112,52,{align:'left',weight:800,alpha:h});txt('最終氷期の、もっとも寒い時期',96,170,28,{align:'left',color:OCHRE,alpha:h});
+ const lab=(key,s1,tA,tB,dx=0,dy=0,size=32)=>{const[x,y]=mapPt(MAP.sites[key],cam);label(s1,x+dx,y+dy,win(t,tA,tB,0.6),{size})};
+ lab('scand','氷床　厚さ最大 約3000m',at('n14',0.5),at('n17',0.1),40,40,36);
+ lab('alps','アルプスの氷河',at('n15',0.3),at('n17',0.1),40,-60);
+ const sl=win(t,at('n16',0.3),at('n17',0.1),0.6);if(sl>0){ctx.fillStyle=`rgba(10,6,4,${0.6*sl})`;ctx.fillRect(60,230,560,84);txt('海面　いまより 約120m 低い',96,272,32,{align:'left',alpha:sl,color:'200,225,235'})}
+ lab('doggerland','イギリスは大陸と地続き',atStr('n16','イギリス'),at('n17',0.1),40,70,30);
+ // 避難地と遺跡
+ const[rx,ry]=mapPt(MAP.sites.refuge,cam);label('比較的すごしやすい土地',rx-40,ry+190,win(t,at('n17',0.5),SC('steppe').t0,0.7),{size:38,weight:800});
+ [['lascaux','ラスコー',0,-1],['chauvet','ショーヴェ',0.6,1],['altamira','アルタミラ',1.2,-1]].forEach(([k,n,d,side])=>{const t0=at('n18',0.25)+d;const a=easeOut((t-t0)/0.5);if(a<=0)return;const[x,y]=mapPt(MAP.sites[k],cam);
+  ctx.fillStyle=`rgba(255,235,200,${a})`;ctx.beginPath();ctx.arc(x,y,9,0,7);ctx.fill();const pr=(t-t0)%2/2;ctx.strokeStyle=`rgba(255,220,170,${(1-pr)*a})`;ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,9+pr*36,0,7);ctx.stroke();
+  label(n,x,y+side*44,a,{size:34,weight:800})});
+ note('※ 海岸線・氷床の範囲は概略');txt('地図データ：Natural Earth',W-48,H-40,20,{align:'right',alpha:0.45,blur:4})}
+
+// ================= 9. steppe / 11. hunter =================
+let steppeBg,steppeFg;const SWW=4200;
+function buildSteppe(){steppeBg=mk(SWW,1080);const g=steppeBg.getContext('2d');
+ const sky=g.createLinearGradient(0,0,0,600);sky.addColorStop(0,'#8e9ba3');sky.addColorStop(0.6,'#cfd1c8');sky.addColorStop(1,'#e4dccb');g.fillStyle=sky;g.fillRect(0,0,SWW,1080);
+ // 遠くの氷床
+ g.beginPath();g.moveTo(0,600);for(let x=0;x<=SWW;x+=20){const h=lerp(150,40,x/SWW)+fbm(n2,x/90,3,4)*40;g.lineTo(x,560-h)}g.lineTo(SWW,600);g.closePath();
+ const ig=g.createLinearGradient(0,400,0,580);ig.addColorStop(0,'#f2f5f6');ig.addColorStop(1,'#b9c4c8');g.fillStyle=ig;g.fill();
+ // 丘
+ const hill=(base,amp,sc,col,seed)=>{g.beginPath();g.moveTo(0,1080);for(let x=0;x<=SWW;x+=10)g.lineTo(x,base-fbm(n1,x/sc+seed,seed,4)*amp);g.lineTo(SWW,1080);g.closePath();g.fillStyle=col;g.fill()};
+ hill(600,60,500,'#a6a183',2);hill(650,70,400,'#9b8f66',5);hill(720,50,300,'#8a7a50',9);
+ const id=g.getImageData(0,560,SWW,520);const d=id.data;for(let i=0;i<d.length;i+=4){const x=(i/4)%SWW,y=Math.floor(i/4/SWW);const v=(fbm(n2,x/30,y/12,3)-0.5)*40;d[i]+=v;d[i+1]+=v;d[i+2]+=v*0.6}g.putImageData(id,0,560);
+ steppeFg=mk(SWW,300);const f=steppeFg.getContext('2d');const r=rng(42);for(let i=0;i<2600;i++){const x=r()*SWW,y=140+r()*160,h=30+r()*90;f.strokeStyle=`rgba(${70+r()*40},${58+r()*30},${30+r()*20},${0.5+r()*0.5})`;f.lineWidth=1+r()*2.5;f.beginPath();f.moveTo(x,y+60);f.quadraticCurveTo(x+(r()-.5)*20,y+30,x+(r()-.5)*40,y+60-h);f.stroke()}}
+const HERD=[['mammoth',520,840,1.15,'マンモス'],['mammoth',300,800,0.85],['rhino',1050,860,1.0,'ケサイ'],['reindeer',1480,830,0.9,'トナカイ'],['reindeer',1640,800,0.75],['reindeer',1360,790,0.7],['horse',2000,850,0.95,'野生の馬'],['horse',2180,815,0.8],['bison',2560,860,1.0,'バイソン'],['bison',2760,820,0.8],['lion',3250,880,0.95,'ホラアナライオン'],['wolf',3560,850,0.9,'オオカミ']];
+const HERD_KEY={'マンモス':'マンモス','ケサイ':'毛の長いサイ','トナカイ':'トナカイ','野生の馬':'野生の馬','バイソン':'バイソン','ホラアナライオン':'ホラアナライオン','オオカミ':'オオカミ'};
+function steppeView(t,camX,herdFn,dusk=0){ctx.setTransform(1,0,0,1,0,0);const ox=-camX+W/2;
+ ctx.drawImage(steppeBg,ox*0.6-(SWW-W)*0,0,SWW,1080);
+ herdFn(ox);
+ {const fx=((ox*1.25)%SWW+SWW)%SWW-SWW;ctx.drawImage(steppeFg,fx,820,SWW,300);ctx.drawImage(steppeFg,fx+SWW,820,SWW,300)}
+ const hz=ctx.createLinearGradient(0,350,0,700);hz.addColorStop(0,'rgba(230,225,210,0)');hz.addColorStop(1,'rgba(230,225,210,0.12)');ctx.fillStyle=hz;ctx.fillRect(0,0,W,H);
+ if(dusk>0){ctx.globalCompositeOperation='multiply';ctx.fillStyle=`rgba(${lerp(255,200,dusk)},${lerp(255,140,dusk)},${lerp(255,100,dusk)},1)`;ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over'}}
+function sSteppe(t){const s=SC('steppe');
+ const keys=[[0,960,0,0]];for(const h of HERD)if(h[4]){const tk=atStr('n20',HERD_KEY[h[4]]);const dx=(tk+0.6-s.t0)*(h[0]==='mammoth'?14:18);keys.push([tk-0.7,Math.max(960,Math.min(4300,(h[1]+dx+120*h[3]-0.1*960)/0.9)),0,0,1.1])}
+ const cx=camMove(t,keys)[0];
+ steppeView(t,cx,ox=>{for(const[n,x,y,sc,nm]of HERD){const key=nm?HERD_KEY[nm]:null;const t0=nm?atStr('n20',key)-0.4:null;
+  const a=1;const walk=(t-s.t0)*(n==='mammoth'?2.2:n==='rhino'?2.6:3.2)+x;const dx=(t-s.t0)*(n==='mammoth'?14:18);
+  const fade=0.75+0.25*((y-780)/100);ctx.globalAlpha=a;drawAnimal(ctx,n,ox*0.9+x+dx,y,sc,{walk,color:`rgb(${Math.round(lerp(90,38,fade))},${Math.round(lerp(78,26,fade))},${Math.round(lerp(62,18,fade))})`});ctx.globalAlpha=1;
+  if(nm){const la=win(t,t0,t0+4.2,0.5);label(nm,ox*0.9+x+dx+120*sc,y+44,la,{size:32,weight:800,color:'255,248,235'})}}});
+ const g1=atStr('n19','乾いた草原');const a=win(t,g1,at('n20',0),0.6);if(a>0){ctx.fillStyle=`rgba(20,14,10,${0.45*a})`;ctx.fillRect(0,80,W,120);txt('マンモス・ステップ　─ 寒く乾いた草原 ─',W/2,140,44,{weight:800,alpha:a})}
+ label('遠くに氷床',260,370,win(t,s.t0+1.5,g1,0.6),{size:28});
+ note('※ イメージ図')}
+function sHunter(t){const s=SC('hunter');const l=t-s.t0;const cx=900+l*40;
+ steppeView(t,cx,ox=>{for(let i=0;i<5;i++){const x=1500+i*120+l*30,y=780+(i%2)*14;drawAnimal(ctx,'reindeer',ox*0.9+x,y,0.55,{walk:l*3+i,color:'rgb(80,64,48)'})}
+  for(let i=0;i<3;i++){const x=780+i*150+l*44,y=900+(i%2)*20;drawHunter(ctx,ox*0.9+x,y,1.05-i*0.05,l*3.4+i*1.3,'rgb(34,22,15)')}},0.55);
+ note('※ イメージ図')}
+
+// ================= 10. arrival =================
+function sArrival(t){const s=SC('arrival');const cam=[1040,600,0.95];drawMap({cam,lgm:0,ice:0,alps:0,dim:0.3,refuge:0});
+ const pts=['levant','anatolia','balkans','danube','france'].map(k=>mapPt(MAP.sites[k],cam));
+ const p=easeOut((t-at('n21',0.35))/3.5);if(p>0){const segs=[];let total=0;for(let i=1;i<pts.length;i++){const d=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);segs.push(d);total+=d}
+  ctx.save();ctx.strokeStyle='rgba(255,215,160,0.95)';ctx.lineWidth=7;ctx.lineCap='round';ctx.setLineDash([2,16]);ctx.beginPath();ctx.moveTo(...pts[0]);let rem=total*p,last=pts[0],ang=0;
+  for(let i=1;i<pts.length&&rem>0;i++){const k=Math.min(1,rem/segs[i-1]);const x=lerp(pts[i-1][0],pts[i][0],k),y=lerp(pts[i-1][1],pts[i][1],k);ctx.lineTo(x,y);ang=Math.atan2(pts[i][1]-pts[i-1][1],pts[i][0]-pts[i-1][0]);last=[x,y];rem-=segs[i-1]}ctx.stroke();
+  ctx.setLineDash([]);ctx.fillStyle='rgba(255,215,160,0.95)';ctx.translate(...last);ctx.rotate(ang);ctx.beginPath();ctx.moveTo(18,0);ctx.lineTo(-14,-14);ctx.lineTo(-14,14);ctx.closePath();ctx.fill();ctx.restore()}
+ const h=fadeIn(t,atStr('n21','ホモ'),0.8);ctx.fillStyle=`rgba(10,6,4,${0.6*h})`;ctx.fillRect(60,64,620,150);
+ txt('ホモ・サピエンス',96,116,54,{align:'left',weight:800,alpha:h});txt('私たちと同じ種',96,176,30,{align:'left',color:OCHRE,alpha:h});
+ const[lx,ly]=mapPt(MAP.sites.anatolia,cam);label('約4万5000年前',lx+40,ly+90,fadeIn(t,atStr('n21','4万'),0.6),{size:40,weight:800,color:'255,225,180'});
+ note('※ 経路は概略');txt('地図データ：Natural Earth',W-48,H-40,20,{align:'right',alpha:0.45,blur:4})}
+
+// ================= 12. tools =================
+function drawOn(path,p,col,w){if(p<=0)return;ctx.save();ctx.strokeStyle=col;ctx.lineWidth=w;ctx.lineCap='round';ctx.lineJoin='round';ctx.setLineDash([3000*p,4000]);ctx.stroke(path);ctx.restore()}
+function sTools(t){darkBg('#15100c');const s=SC('tools');
+ const T=[atStr('n24','石'),atStr('n24','骨'),atStr('n24','毛皮')];const C=`rgba(${CREAM},0.95)`;
+ // 石刃
+ let p=easeOut((t-T[0]+0.2)/1.4);if(p>0){ctx.save();ctx.translate(400,470);ctx.rotate(-0.5);
+  const blade=smoothPath([[-190,0],[-120,-34],[0,-42],[120,-30],[200,0],[120,22],[0,36],[-120,30]],true,0.5);
+  ctx.globalAlpha=ease((t-T[0]-0.6)/0.8);const bg=ctx.createLinearGradient(0,-40,0,40);bg.addColorStop(0,'#8d8d88');bg.addColorStop(0.5,'#5c5a57');bg.addColorStop(1,'#3a3936');ctx.fillStyle=bg;ctx.fill(blade);ctx.globalAlpha=1;
+  drawOn(blade,p,C,3);const r=rng(3);for(let i=0;i<14;i++){const x=-160+i*24;drawOn(smoothPath([[x,-36+Math.abs(x)*0.04],[x+10,-12],[x+4,4]],false),p,`rgba(${CREAM},0.5)`,1.6)}
+  drawOn(smoothPath([[-185,0],[0,-6],[195,0]],false),p,`rgba(${CREAM},0.7)`,2);ctx.restore()}
+ label('石を打ち欠いた刃物',400,720,fadeIn(t,T[0]+0.4),{size:36,weight:800});
+ // 縫い針
+ p=easeOut((t-T[1]+0.2)/1.2);if(p>0){ctx.save();ctx.translate(960,470);ctx.rotate(-0.6);
+  const nd=new Path2D();nd.moveTo(-210,0);nd.quadraticCurveTo(0,-9,180,-7);nd.arc(184,0,7,-Math.PI/2,Math.PI/2);nd.quadraticCurveTo(0,9,-210,0);
+  ctx.globalAlpha=ease((t-T[1]-0.4)/0.8);ctx.fillStyle='#d9c7a2';ctx.fill(nd);ctx.fillStyle='#15100c';ctx.beginPath();ctx.ellipse(172,0,6,2.6,0,0,7);ctx.fill();ctx.globalAlpha=1;
+  drawOn(nd,p,C,2.5);drawOn(smoothPath([[172,0],[210,40],[170,90],[230,130],[300,110]],false),easeOut((t-T[1]-0.6)/1.2),`rgba(${OCHRE},0.9)`,2.5);ctx.restore()}
+ label('骨を削った縫い針',960,720,fadeIn(t,T[1]+0.4),{size:36,weight:800});
+ // 毛皮の服
+ p=easeOut((t-T[2]+0.2)/1.8);if(p>0){ctx.save();ctx.translate(1520,470);
+  const coat=smoothPath([[-50,-190],[0,-215],[50,-190],[70,-140],[150,-90],[190,40],[150,50],[110,-50],[100,160],[-100,160],[-110,-50],[-150,50],[-190,40],[-150,-90],[-70,-140]],true,0.2);
+  ctx.globalAlpha=ease((t-T[2]-0.6)/0.9)*0.9;ctx.fillStyle='#6b4b30';ctx.fill(coat);ctx.globalAlpha=1;drawOn(coat,p,C,3);
+  const st=new Path2D();st.moveTo(0,-140);st.lineTo(0,160);st.moveTo(-110,-50);st.lineTo(-70,-140);st.moveTo(110,-50);st.lineTo(70,-140);ctx.setLineDash([8,8]);ctx.globalAlpha=ease((t-T[2]-1.0)/0.8);ctx.strokeStyle=`rgba(${OCHRE},0.95)`;ctx.lineWidth=2.5;ctx.stroke(st);ctx.setLineDash([]);
+  ctx.strokeStyle='rgba(225,205,170,0.8)';ctx.lineWidth=2;const r=rng(9);for(let i=0;i<40;i++){const x=-100+i*5;ctx.beginPath();ctx.moveTo(x,160);ctx.lineTo(x+(r()-.5)*6,172+r()*8);ctx.stroke()}ctx.restore()}
+ label('毛皮を縫い合わせた服',1520,720,fadeIn(t,T[2]+0.4),{size:36,weight:800});
+ note('※ イメージ図')}
+
+// ================= 13. section: 洞窟の断面 =================
+let sectionCv;const SXW=2800;
+const TUN=[[440,520],[700,545],[980,600],[1260,585],[1540,650],[1820,630],[2100,690],[2380,665]];
+function buildSection(){sectionCv=mk(SXW,1080);const g=sectionCv.getContext('2d');
+ const sky=g.createLinearGradient(0,0,0,600);sky.addColorStop(0,'#2a3238');sky.addColorStop(1,'#6f6a5e');g.fillStyle=sky;g.fillRect(0,0,SXW,1080);
+ const top=x=>x<430?640:300-Math.sin((x-430)/500)*40-fbm(n1,x/200,2,3)*60;
+ const rock=new Path2D();rock.moveTo(430,1080);rock.lineTo(430,560);rock.lineTo(452,470);rock.lineTo(380,430);rock.lineTo(420,320);for(let x=430;x<=SXW;x+=10)rock.lineTo(x,top(x));rock.lineTo(SXW,1080);rock.closePath();
+ g.save();g.clip(rock);g.drawImage(rockOnly,0,0,SXW,1080);g.fillStyle='rgba(60,40,25,0.55)';g.fillRect(0,0,SXW,1080);
+ const dk=g.createLinearGradient(430,0,2000,0);dk.addColorStop(0,'rgba(0,0,0,0)');dk.addColorStop(1,'rgba(0,0,0,0.6)');g.fillStyle=dk;g.fillRect(0,0,SXW,1080);g.restore();
+ g.fillStyle='#4c4535';g.fillRect(0,640,432,440);g.strokeStyle='rgba(30,22,14,0.9)';g.lineWidth=4;g.stroke(rock);
+ g.fillStyle='#55603f';g.beginPath();for(let x=430;x<=SXW;x+=10)g.lineTo(x,top(x));for(let x=SXW;x>=430;x-=10)g.lineTo(x,top(x)+14);g.fill();
+ // 通路
+ const tun=smoothPath(TUN,false,0.5);g.lineCap='round';g.lineJoin='round';g.strokeStyle='#120c08';g.lineWidth=96;g.stroke(tun);
+ g.fillStyle='#120c08';g.beginPath();g.ellipse(2440,650,150,110,0,0,7);g.fill();
+ g.fillStyle='#120c08';g.fillRect(380,560,80,80);
+ const lt=g.createLinearGradient(400,0,1500,0);lt.addColorStop(0,'rgba(150,110,70,0.85)');lt.addColorStop(0.35,'rgba(70,45,28,0.5)');lt.addColorStop(1,'rgba(0,0,0,0)');g.strokeStyle=lt;g.lineWidth=90;g.stroke(tun);
+ // 奥の小さな絵
+ const P=paintLayer(400,260,q=>{drawAnimal(q,'bison',40,200,0.45,{mode:'cave',seed:5,line:5});drawAnimal(q,'horse',190,160,0.42,{mode:'cave',seed:7,line:5})});g.globalCompositeOperation='screen';g.globalAlpha=0.9;g.drawImage(P,2290,500);g.globalAlpha=1;g.globalCompositeOperation='source-over'}
+function sSection(t){const s=SC('section');const c=camMove(t,[[0,860,560,1.0],[at('n27',0.02),1900,560,1.0,3.0]]);
+ ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(sectionCv,W/2-c[0],0);const ox=W/2-c[0];
+ // 入り口の火と人
+ const fx=ox+300,fy=640;const I=flick(t,0.1);const fg=ctx.createRadialGradient(fx,fy-20,0,fx,fy-20,220);fg.addColorStop(0,`rgba(255,170,80,${0.6*I})`);fg.addColorStop(1,'rgba(255,120,40,0)');ctx.globalCompositeOperation='lighter';ctx.fillStyle=fg;ctx.fillRect(fx-260,fy-260,520,520);ctx.globalCompositeOperation='source-over';
+ ctx.fillStyle=`rgba(255,${190+30*I},110,0.95)`;ctx.beginPath();ctx.moveTo(fx-16,fy);ctx.quadraticCurveTo(fx,fy-50*I,fx+16,fy);ctx.fill();
+ drawHunter(ctx,ox+200,fy,0.42,0,'rgb(25,18,12)');drawHunter(ctx,ox+380,fy,0.4,1.4,'rgb(25,18,12)');
+ // 奥のランプ
+ const lx=ox+2400,ly=700;const lg2=ctx.createRadialGradient(lx,ly,0,lx,ly,170);lg2.addColorStop(0,`rgba(255,180,90,${0.35*flick(t+3,0.12)})`);lg2.addColorStop(1,'rgba(255,140,60,0)');ctx.globalCompositeOperation='lighter';ctx.fillStyle=lg2;ctx.fillRect(lx-200,ly-200,400,400);ctx.globalCompositeOperation='source-over';
+ const a1=win(t,at('n26',0.55),s.t1,0.6);leader(ox+300,560,ox+300,340,a1);label('暮らしの跡',ox+300,300,a1,{size:40,weight:800});label('入り口・岩陰',ox+300,250,a1,{size:28,color:OCHRE});
+ const a2=win(t,atStr('n27','その奥')+0.6,s.t1,0.6);leader(ox+2440,540,ox+2440,400,a2);label('絵が描かれた場所',ox+2440,360,a2,{size:40,weight:800});label('光の届かない奥',ox+2440,310,a2,{size:28,color:OCHRE});
+ const tb=atStr('n27','何百');const b=easeOut((t-tb)/1.4);if(b>0){ctx.strokeStyle=`rgba(${OCHRE},0.9)`;ctx.lineWidth=3;const y=180;ctx.beginPath();ctx.moveTo(ox+440,y+14);ctx.lineTo(ox+440,y);ctx.lineTo(ox+lerp(440,2440,b),y);ctx.stroke();
+  txt('ときに 数百メートル',ox+1440,y-34,40,{weight:800,alpha:fadeIn(t,tb+0.6),color:'255,230,190'})}
+ note('※ 断面のイメージ図')}
+
+// ================= 14. reindeer =================
+let rRock,wallAnimals,ghostDeer;
+function buildReindeer(){rRock=mk(W,H);const g=rRock.getContext('2d');g.drawImage(rockOnly,1400,0,2133,1200,0,0,W,H);g.fillStyle='rgba(0,0,0,0.55)';g.fillRect(0,0,W,H);
+ wallAnimals=mk(900,620);const w=wallAnimals.getContext('2d');w.drawImage(rockOnly,200,200,900,620,0,0,900,620);
+ const L=paintLayer(900,620,q=>{drawAnimal(q,'horse',60,270,0.95,{mode:'cave',seed:2,line:6,fill:'rgba(150,72,28,0.6)'});drawAnimal(q,'aurochs',500,280,0.95,{mode:'cave',seed:3,line:6,fill:'rgba(30,18,12,0.35)'});
+  drawAnimal(q,'deer',90,590,0.82,{mode:'cave',seed:4,line:5,fill:'rgba(150,72,28,0.4)'});drawAnimal(q,'bison',520,580,0.95,{mode:'cave',seed:5,line:6,fill:'rgba(160,50,24,0.7)'})});
+ w.globalCompositeOperation='multiply';w.drawImage(L,0,0)}
+function sReindeer(t){const s=SC('reindeer');ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(rRock,0,0);
+ const a0=win(t,at('n28',0),at('n29',0)-0.2,0.5);txt('もうひとつの、不思議',W/2,500,80,{weight:800,alpha:a0,ls:6});
+ const t1=at('n29',0),t2=at('n30',0);const a1=fadeIn(t,t1,0.7),a2=fadeIn(t,t2,0.7);
+ if(a1>0){ctx.globalAlpha=a1*0.5;ctx.fillStyle=`rgb(${CREAM})`;ctx.fillRect(W/2-1,160,2,700);ctx.globalAlpha=1}
+ txt('食べていた動物',480,170,46,{weight:800,alpha:a1});txt('ラスコーで見つかった骨',480,226,26,{color:OCHRE,alpha:a1});
+ if(a1>0){ctx.globalAlpha=a1;drawAnimal(ctx,'reindeer',330,700,1.35,{color:'rgb(226,206,172)'});ctx.globalAlpha=1}
+ label('ほとんどがトナカイ',480,790,fadeIn(t,atStr('n29','ほとんど'),0.6),{size:44,weight:800,color:'255,225,180'});
+ txt('壁に描かれた動物',1440,170,46,{weight:800,alpha:a2});txt('ラスコーの壁画',1440,226,26,{color:OCHRE,alpha:a2});
+ const a3=fadeIn(t,atStr('n30','馬')-0.2,0.8);if(a3>0){ctx.globalAlpha=a3;ctx.drawImage(wallAnimals,1440-450*0.75,290,900*0.75,620*0.75);ctx.globalAlpha=1;
+  ctx.strokeStyle=`rgba(${CREAM},${0.3*a3})`;ctx.strokeRect(1440-450*0.75,290,900*0.75,620*0.75)}
+ [['馬',1235,505],['牛',1600,505],['シカ',1235,735],['バイソン',1600,735]].forEach(([n,x,y],i)=>label(n,x,y,fadeIn(t,atStr('n30',n==='牛'?'牛':n)-0.1,0.5),{size:28,weight:800}));
+ label('トナカイは、ほとんどいない',1440,820,fadeIn(t,atStr('n30','トナカイの絵'),0.6),{size:44,weight:800,color:'255,225,180'});
+ note('※ 図版はイメージ再現')}
+
+// ================= 字幕 =================
+let SUBS=[];
+function buildSubs(){for(const l of TL.lines){const sents=l.text.match(/[^。]+。?/g);const chunks=[];
+  for(let s of sents){s=s.replace(/。$/,'');if(s.length<=26){chunks.push(s);continue}
+   const parts=s.split(/(?<=、)/);let best=null;for(let i=1;i<parts.length;i++){const a=parts.slice(0,i).join(''),b=parts.slice(i).join('');const sc=Math.max(a.length,b.length);if(!best||sc<best[0])best=[sc,a.replace(/、$/,''),b]}
+   if(best&&best[0]<=34){chunks.push(best[1],best[2])}else{const n=Math.ceil(s.length/26);let rest=parts;let cur='';for(const p of parts){if((cur+p).length>s.length/n+4&&cur){chunks.push(cur.replace(/、$/,''));cur=''}cur+=p}if(cur)chunks.push(cur)}}
+  const total=chunks.reduce((a,c)=>a+c.length,0);let acc=0;const dur=l.t1-l.t0-0.25;
+  chunks.forEach((c,i)=>{const a=l.t0+dur*acc/total;acc+=c.length;const b=i===chunks.length-1?l.t1+0.15:l.t0+dur*acc/total;SUBS.push({t0:a,t1:b,text:c})})}}
+function subtitle(t){const s=SUBS.find(s=>t>=s.t0&&t<s.t1);if(!s)return;ctx.setTransform(1,0,0,1,0,0);ctx.save();ctx.font='500 46px Mincho';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.lineJoin='round';ctx.strokeStyle='rgba(0,0,0,0.75)';ctx.lineWidth=8;ctx.strokeText(s.text,W/2,1000);ctx.shadowColor='rgba(0,0,0,0.9)';ctx.shadowBlur=12;ctx.fillStyle='#fbf3e4';ctx.fillText(s.text,W/2,1000);ctx.restore()}
+
+// ================= 合成 =================
+const SCENES={intro:sIntro,timeline:sTimeline,series:sSeries,four:sFour,question:sQuestion,chapter:sChapter,panel:sPanel,map:sMap,steppe:sSteppe,arrival:sArrival,hunter:sHunter,tools:sTools,section:sSection,reindeer:sReindeer,outro:sOutro};
+const bufA=mk(W,H),bufB=mk(W,H);const XF=0.9;
+function drawScene(name,t,buf){const g=buf.getContext('2d');ctx=g;g.setTransform(1,0,0,1,0,0);g.globalAlpha=1;g.globalCompositeOperation='source-over';g.fillStyle='#000';g.fillRect(0,0,W,H);SCENES[name](t);g.setTransform(1,0,0,1,0,0);ctx=MAIN}
+function render(t){let i=0;while(i<TL.scenes.length-1&&t>=TL.scenes[i+1].t0)i++;
+ const cur=TL.scenes[i];drawScene(cur.name,t,bufA);
+ MAIN.setTransform(1,0,0,1,0,0);MAIN.globalAlpha=1;MAIN.globalCompositeOperation='source-over';MAIN.drawImage(bufA,0,0);
+ if(i>0&&t-cur.t0<XF){drawScene(TL.scenes[i-1].name,t,bufB);MAIN.globalAlpha=1-ease((t-cur.t0)/XF);MAIN.drawImage(bufB,0,0);MAIN.globalAlpha=1}
+ ctx=MAIN;
+ ctx.globalCompositeOperation='overlay';ctx.globalAlpha=0.08;ctx.drawImage(grains[Math.floor(t*24)%grains.length],0,0,W,H);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+ const vg=ctx.createRadialGradient(W/2,H/2,H*0.4,W/2,H/2,H*1.0);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,0.6)');ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
+ const ch=SC('chapter');if(!(t>=ch.t0&&t<ch.t1))subtitle(t);
+ const fi=1-clamp(t/1.0),fo=clamp((t-(TL.duration-1.6))/1.5);const f=Math.max(fi,fo);if(f>0){ctx.fillStyle=`rgba(0,0,0,${f})`;ctx.fillRect(0,0,W,H)}}
+
+window.ready=(async()=>{await document.fonts.load('500 40px Mincho');await document.fonts.load('800 40px Mincho');
+ TL=await (await fetch('timeline.json')).json();MAP=await (await fetch('map.json')).json();for(const l of TL.lines)LINE[l.id]=l;window.DURATION=TL.duration;
+ buildGrains();buildMottle();buildBison();buildWorld();
+ qRock=mk(W,H);qRock.getContext('2d').drawImage(rockOnly,300,0,2133,1200,0,0,W,H);stencilCv=mk(900,900);stencil(stencilCv.getContext('2d'),450,450,1.3,-0.12,1);
+ buildPanel();buildMap();buildSteppe();buildSection();buildReindeer();buildSubs();window.SUBS=SUBS;return true})();
+window.render=render;
+</script></body></html>

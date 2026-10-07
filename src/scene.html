@@ -7,182 +7,17 @@ html,body{margin:0;background:#000;overflow:hidden}
 canvas{display:block}
 </style></head>
 <body><canvas id="c" width="1920" height="1080"></canvas>
+<script src="cave.js"></script>
 <script>
-const W=1920,H=1080;
-const cv=document.getElementById('c');const ctx=cv.getContext('2d');
-function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
-const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
-const ease=x=>{x=clamp(x);return x*x*(3-2*x)};
-const easeOut=x=>1-Math.pow(1-clamp(x),3);
-const lerp=(a,b,k)=>a+(b-a)*k;
-function mk(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c}
-
-// ---------- value noise ----------
-function makeNoise(seed){const r=rng(seed);const P=new Float32Array(256*256);for(let i=0;i<P.length;i++)P[i]=r();
- return (x,y)=>{const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi;const u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);
- const a=P[(xi&255)+((yi&255)<<8)],b=P[((xi+1)&255)+((yi&255)<<8)],c=P[(xi&255)+(((yi+1)&255)<<8)],d=P[((xi+1)&255)+(((yi+1)&255)<<8)];
- return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v}}
-const n1=makeNoise(7),n2=makeNoise(11);
-function fbm(n,x,y,o){let s=0,a=.5,f=1;for(let i=0;i<o;i++){s+=a*n(x*f,y*f);f*=2.03;a*=.5}return s}
-
-// ---------- world ----------
-const WW=3600,WH=1200;
-const world=mk(WW,WH);
-function buildRock(){
- const sw=WW/2,sh=WH/2;const c=mk(sw,sh);const g=c.getContext('2d');const id=g.createImageData(sw,sh);const d=id.data;
- for(let y=0;y<sh;y++)for(let x=0;x<sw;x++){
-  const h=fbm(n1,x/140,y/140,6);
-  const hx=fbm(n1,(x+1.5)/140,y/140,4)-fbm(n1,x/140,y/140,4);
-  const hy=fbm(n1,x/140,(y+1.5)/140,4)-fbm(n1,x/140,y/140,4);
-  let shade=0.78+(-hx*9-hy*7);
-  const crack=Math.abs(fbm(n2,x/60,y/90,4)-0.5);
-  let ck=crack<0.012?0.55+crack*30:1;
-  const stain=fbm(n2,x/300+9,y/300,4);
-  let l=(0.55+0.45*h)*shade*ck;
-  let r=200*l+stain*25, gg=172*l+stain*10, b=132*l-stain*10;
-  const i=(y*sw+x)*4;d[i]=r;d[i+1]=gg;d[i+2]=b;d[i+3]=255}
- g.putImageData(id,0,0);
- const wg=world.getContext('2d');wg.imageSmoothingQuality='high';wg.drawImage(c,0,0,WW,WH);
-}
-// grain tiles
-const grains=[];
-function buildGrains(){for(let k=0;k<6;k++){const c=mk(960,540);const g=c.getContext('2d');const id=g.createImageData(960,540);const r=rng(100+k);
- for(let i=0;i<id.data.length;i+=4){const v=r()*255;id.data[i]=id.data[i+1]=id.data[i+2]=v;id.data[i+3]=255}g.putImageData(id,0,0);grains.push(c)}}
-// pigment mottling mask
-let mottle;
-function buildMottle(){mottle=mk(1024,1024);const g=mottle.getContext('2d');const id=g.createImageData(1024,1024);
- for(let y=0;y<1024;y++)for(let x=0;x<1024;x++){const v=fbm(n2,x/18,y/18,4);const a=clamp((v-0.22)*2.2);const i=(y*1024+x)*4;id.data[i]=id.data[i+1]=id.data[i+2]=0;id.data[i+3]=a*255}
- g.putImageData(id,0,0)}
-
-// ---------- shapes ----------
-function smoothPath(pts,closed=true,t=0.5){const p=new Path2D();const n=pts.length;const P=i=>closed?pts[(i+n)%n]:pts[clamp(i,0,n-1)];
- p.moveTo(pts[0][0],pts[0][1]);const m=closed?n:n-1;
- for(let i=0;i<m;i++){const p0=P(i-1),p1=P(i),p2=P(i+1),p3=P(i+2);
-  p.bezierCurveTo(p1[0]+(p2[0]-p0[0])*t/3,p1[1]+(p2[1]-p0[1])*t/3,p2[0]-(p3[0]-p1[0])*t/3,p2[1]-(p3[1]-p1[1])*t/3,p2[0],p2[1])}
- if(closed)p.closePath();return p}
-function jitter(pts,amt,seed){const r=rng(seed);return pts.map(([x,y])=>[x+(r()-.5)*amt,y+(r()-.5)*amt])}
-function leg(x,y,w,len,dx){return [[x,y],[x+w,y],[x+w*0.82+dx*0.5,y+len*0.55],[x+w*0.6+dx,y+len],[x+w*0.05+dx,y+len],[x+w*0.18+dx*0.5,y+len*0.55]]}
-
-// paint a figure into a layer then onto world (pigment absorbed into rock)
-function paintLayer(w,h,fn){const c=mk(w,h);const g=c.getContext('2d');g.lineCap='round';g.lineJoin='round';fn(g);
- g.globalCompositeOperation='destination-out';g.globalAlpha=0.55;g.drawImage(mottle,Math.random()*-200,Math.random()*-200,1400,1400);g.globalAlpha=1;g.globalCompositeOperation='source-over';return c}
-function charcoal(g,path,wid,seed,alpha=0.9){const r=rng(seed);for(let k=0;k<3;k++){g.save();g.translate((r()-.5)*3,(r()-.5)*3);g.strokeStyle=`rgba(18,12,10,${alpha*(k?0.45:1)})`;g.lineWidth=wid*(k?0.6:1);g.stroke(path);g.restore()}}
-
-// ---- Horse (facing right) ----
-const HORSE=[[40,110],[60,80],[110,68],[180,76],[240,70],[280,52],[318,28],[338,14],[346,2],[352,18],[375,30],[404,68],[398,86],[378,88],[355,76],[334,92],[312,122],[300,150],[250,166],[170,170],[110,160],[74,148],[50,128]];
-const HORSE_TAIL=[[42,100],[20,120],[6,165],[16,172],[32,135],[48,112]];
-function drawHorse(g,ox,oy,s,seed,fill='rgba(150,72,28,0.85)'){
- g.save();g.translate(ox,oy);g.scale(s,s);
- const legs=[leg(272,140,24,100,6),leg(294,136,22,102,18),leg(86,136,30,100,-10),leg(118,142,26,96,6)];
- for(const L of legs){const p=smoothPath(jitter(L,2,seed++),true,0.2);g.fillStyle='rgba(40,20,12,0.85)';g.fill(p);charcoal(g,p,3,seed++)}
- const body=smoothPath(jitter(HORSE,3,seed++));
- const gr=g.createLinearGradient(0,20,0,170);gr.addColorStop(0,'rgba(90,40,18,0.92)');gr.addColorStop(0.55,fill);gr.addColorStop(0.9,'rgba(225,185,120,0.55)');
- g.fillStyle=gr;g.fill(body);
- g.fillStyle='rgba(20,12,10,0.85)';g.fill(smoothPath(jitter(HORSE_TAIL,3,seed++)));
- // mane
- g.strokeStyle='rgba(20,12,10,0.9)';g.lineWidth=16;g.stroke(smoothPath([[262,62],[292,44],[322,22],[340,10]],false));
- // head darker
- g.fillStyle='rgba(20,12,10,0.55)';g.beginPath();g.ellipse(372,52,30,22,0.55,0,7);g.fill();
- charcoal(g,body,6,seed++);
- g.restore()}
-
-// ---- Aurochs (facing left, outline) ----
-const AUROCH=[[20,150],[26,128],[48,96],[78,82],[120,74],[170,56],[250,52],[340,58],[430,60],[500,66],[550,78],[578,100],[584,140],[566,170],[520,188],[440,198],[330,204],[230,200],[170,206],[130,216],[98,202],[70,186],[44,176],[26,166]];
-function drawAurochs(g,ox,oy,s,seed){g.save();g.translate(ox,oy);g.scale(s,s);
- const body=smoothPath(jitter(AUROCH,3,seed++));
- g.fillStyle='rgba(120,52,24,0.18)';g.fill(body);
- g.save();g.clip(body);const hg=g.createLinearGradient(20,0,230,0);hg.addColorStop(0,'rgba(18,12,10,0.92)');hg.addColorStop(0.55,'rgba(18,12,10,0.75)');hg.addColorStop(1,'rgba(18,12,10,0)');g.fillStyle=hg;g.fillRect(0,0,240,260);
- g.fillStyle='rgba(18,12,10,0.5)';for(let i=0;i<9;i++){g.beginPath();g.ellipse(260+i*34,150+Math.sin(i)*14,9,6,0,0,7);g.fill()}g.restore();
- charcoal(g,body,9,seed++);
- const horns=[[[72,86],[58,42],[92,8]],[[92,80],[112,40],[152,22]]];
- for(const h of horns)charcoal(g,smoothPath(h,false),8,seed++);
- charcoal(g,smoothPath([[574,96],[590,140],[596,196]],false),6,seed++);
- const legs=[leg(140,196,28,96,-16),leg(176,198,24,94,6),leg(492,180,34,104,-10),leg(530,172,28,104,16)];
- for(const L of legs){const p=smoothPath(jitter(L,2,seed++),true,0.2);g.fillStyle='rgba(18,12,10,0.5)';g.fill(p);charcoal(g,p,6,seed++)}
- g.fillStyle='rgba(235,215,185,0.7)';g.beginPath();g.ellipse(58,112,6,4,0,0,7);g.fill();
- g.restore()}
-
-// ---- Bison (facing left) body + two leg sets ----
-const BISON=[[30,170],[34,148],[50,118],[72,98],[100,60],[150,30],[200,36],[260,62],[320,74],[360,80],[382,96],[388,130],[380,160],[350,182],[280,186],[210,182],[150,196],[110,230],[82,236],[66,210],[48,192]];
-const LEGS_A=[leg(126,186,26,92,-2),leg(156,186,22,90,6),leg(326,166,30,98,-2),leg(354,160,24,100,6)];
-const LEGS_B=[leg(126,186,26,86,-44),leg(156,186,22,86,-30),leg(326,166,30,92,40),leg(354,160,24,92,54)];
-const bisonO={x:2560,y:420,s:1.55};
-let bisonBody,legsA,legsB;
-function buildBison(){
- const pad=40,w=440,h=330;
- const S=bisonO.s;
- bisonBody=paintLayer((w+pad*2)*S,(h+pad*2)*S,g=>{g.scale(S,S);g.translate(pad,pad);let seed=300;
-  const body=smoothPath(jitter(BISON,3,seed++));
-  g.fillStyle='rgba(160,50,24,0.88)';g.fill(body);
-  g.save();g.clip(body);const hg=g.createLinearGradient(30,0,250,40);hg.addColorStop(0,'rgba(22,12,10,0.95)');hg.addColorStop(0.5,'rgba(22,12,10,0.8)');hg.addColorStop(1,'rgba(22,12,10,0)');g.fillStyle=hg;g.fillRect(0,0,260,260);
-  g.fillStyle='rgba(22,12,10,0.35)';g.beginPath();g.ellipse(270,182,120,16,0,0,7);g.fill();g.restore();
-  const hr=rng(9);for(let i=0;i<26;i++){const x=150+hr()*110,y=40+hr()*120;charcoal(g,smoothPath([[x,y],[x+8+hr()*10,y+14+hr()*12]],false),3,seed++,0.6)}
-  // beard & horns
-  charcoal(g,smoothPath([[70,104],[56,74],[78,52]],false),7,seed++);
-  charcoal(g,smoothPath([[88,96],[92,66],[116,54]],false),6,seed++);
-  charcoal(g,smoothPath([[386,100],[404,130],[398,196]],false),5,seed++);
-  charcoal(g,body,6,seed++);
-  g.fillStyle='rgba(240,220,190,0.7)';g.beginPath();g.ellipse(58,140,5,4,0,0,7);g.fill();
- });
- const legLayer=(L,seed)=>paintLayer((w+pad*2)*S,(h+pad*2)*S,g=>{g.scale(S,S);g.translate(pad,pad);for(const l of L){const p=smoothPath(jitter(l,2,seed++),true,0.2);g.fillStyle='rgba(28,14,10,0.9)';g.fill(p);charcoal(g,p,4,seed++)}});
- legsA=legLayer(LEGS_A,500);legsB=legLayer(LEGS_B,600);
-}
-function legTips(set){return set.map(L=>{const a=L[3],b=L[4];return [bisonO.x+(40+(a[0]+b[0])/2)*bisonO.s,bisonO.y+(40+a[1])*bisonO.s]})}
-
-// ---- Hand stencil ----
-function fillHand(g,cx,cy,s,rot){g.save();g.translate(cx,cy);g.rotate(rot);g.scale(s,s);
- const finger=(x,y,a,w,l)=>{g.save();g.translate(x,y);g.rotate(a);g.beginPath();g.moveTo(-w,0);g.quadraticCurveTo(-w*1.05,-l*0.6,-w*0.8,-l+w*0.8);g.arc(0,-l+w*0.8,w*0.8,Math.PI,0);g.quadraticCurveTo(w*1.05,-l*0.6,w,0);g.closePath();g.fill();g.restore()};
- g.beginPath();g.moveTo(-58,-6);g.quadraticCurveTo(-64,60,-44,110);g.lineTo(-40,190);g.lineTo(44,190);g.lineTo(46,112);g.quadraticCurveTo(66,70,62,-2);g.quadraticCurveTo(0,-26,-58,-6);g.fill();
- finger(-44,4,-0.30,13,92);finger(-16,-6,-0.10,14,122);finger(14,-8,0.04,14,130);finger(42,0,0.20,13,112);
- finger(56,70,1.0,15,96);
- g.restore()}
-const sprayPts=(()=>{const r=rng(77);const a=[];for(let i=0;i<3400;i++){const ang=r()*Math.PI*2;const rad=Math.pow(r(),0.7)*290;a.push([Math.cos(ang)*rad*0.95,Math.sin(ang)*rad*1.1-30,8+r()*30,r()])}return a})();
-function stencil(g,cx,cy,s,rot,progress,col='150,40,22'){
- const c=mk(900,900);const q=c.getContext('2d');
- const N=Math.floor(sprayPts.length*clamp(progress));
- for(let i=0;i<N;i++){const[x,y,r,a]=sprayPts[i];const gr=q.createRadialGradient(450+x,450+y,0,450+x,450+y,r);gr.addColorStop(0,`rgba(${col},${0.14+a*0.12})`);gr.addColorStop(1,`rgba(${col},0)`);q.fillStyle=gr;q.fillRect(450+x-r,450+y-r,r*2,r*2)}
- q.globalCompositeOperation='destination-out';q.fillStyle='#000';fillHand(q,450,450,s,rot);
- q.globalCompositeOperation='destination-out';q.globalAlpha=0.35;q.drawImage(mottle,-60,-60,1100,1100);
- g.drawImage(c,cx-450,cy-450)}
-
-// ---- dots ----
-function drawDots(g,ox,oy){const r=rng(5);for(let i=0;i<9;i++){const x=ox+i*46+(r()-.5)*10,y=oy+Math.sin(i*0.6)*18;g.fillStyle='rgba(165,38,20,0.85)';g.beginPath();g.ellipse(x,y,15+r()*5,13+r()*5,r(),0,7);g.fill()}}
-
-function buildWorld(){
- buildRock();rockOnly=mk(WW,WH);rockOnly.getContext('2d').drawImage(world,0,0);const g=world.getContext('2d');
- const put=(layer,x,y,op='multiply')=>{g.globalCompositeOperation=op;g.drawImage(layer,x,y);g.globalCompositeOperation='source-over'};
- put(paintLayer(560,380,q=>drawHorse(q,40,40,1.15,10)),260,330);
- put(paintLayer(560,300,q=>drawDots(q,40,120)),840,180);
- const st=mk(900,900);stencil(st.getContext('2d'),450,450,0.95,-0.25,1);put(st,780,330);
- const st2=mk(900,900);stencil(st2.getContext('2d'),450,450,0.8,0.3,1,'120,30,18');put(st2,1000,470);
- put(paintLayer(720,460,q=>drawAurochs(q,40,40,1.05,40)),1480,190);
- put(paintLayer(460,320,q=>drawHorse(q,40,40,0.82,80,'rgba(120,58,24,0.8)')),2050,640);
- put(bisonBody,bisonO.x,bisonO.y);
-}
-
 // ---------- timing helpers ----------
 const FL_START=16.0,FL_END=21.0;
 const toggles=(()=>{const a=[];let t=FL_START,iv=0.32;while(t<FL_END-0.05){a.push(t);t+=iv;iv=Math.max(0.105,iv*0.86)}return a})();
 window.TOGGLES=toggles;
 function legPhase(t){let k=0;for(const x of toggles){if(t>=x)k++;else break}return k}
-function flick(t,amt){return 1+amt*(0.5*Math.sin(t*13.1)+0.3*Math.sin(t*23.7+1)+0.2*(n1(t*9,3.3)-0.5)*4)}
 
 // camera keyframes [t, cx, cy, zoom]
 const CAM=[[0,560,560,1.0],[4.6,560,560,1.0],[7.0,900,560,1.0],[9.4,1820,470,0.92],[11.0,2440,600,1.0],[12.6,2880,690,1.25],[16,2880,690,1.25],[21,2880,690,1.32]];
 function cam(t){for(let i=0;i<CAM.length-1;i++){const a=CAM[i],b=CAM[i+1];if(t<=b[0]){const k=ease((t-a[0])/(b[0]-a[0]));return[lerp(a[1],b[1],k),lerp(a[2],b[2],k),lerp(a[3],b[3],k)]}}const l=CAM[CAM.length-1];return[l[1],l[2],l[3]]}
-
-// ---------- text ----------
-function telop(str,x,y,size,t,t0,t1,opt={}){
- if(t<t0||t>t1+0.6)return;const weight=opt.weight||500;const per=opt.per??0.055;const col=opt.color||'244,232,210';
- ctx.save();ctx.font=`${weight} ${size}px Mincho`;ctx.textBaseline='middle';
- const chars=[...str];const ls=size*(opt.ls??0.08);
- const widths=chars.map(c=>ctx.measureText(c).width+ls);const total=widths.reduce((a,b)=>a+b,0)-ls;
- let cx=opt.align==='left'?x:x-total/2;
- const out=t>t1?1-clamp((t-t1)/0.6):1;
- chars.forEach((c,i)=>{const k=easeOut((t-t0-i*per)/0.5);if(k<=0){cx+=widths[i];return}
-  ctx.globalAlpha=k*out;ctx.shadowColor='rgba(0,0,0,0.9)';ctx.shadowBlur=18;
-  ctx.fillStyle=`rgb(${col})`;ctx.fillText(c,cx,y+(1-k)*14);cx+=widths[i]});
- ctx.restore()}
 
 // ---------- render ----------
 function render(t){
@@ -267,7 +102,7 @@ function drawIntro(t){
 }
 
 // title rock (dim)
-let titleRock,rockOnly;
+let titleRock;
 function titleScene(t){
  if(!titleRock){titleRock=mk(W,H);const g=titleRock.getContext('2d');g.drawImage(rockOnly,600,0,2133,1200,0,0,W,H)}
  const lt=t-21.6;
