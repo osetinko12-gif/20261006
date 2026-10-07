@@ -44,22 +44,40 @@ def s03_ghost(t):                     # Murph's room: fallen book, dust lines
     if t > 3: bubble(d, 88, 64, '?')
     return up(im)
 
-def s04_drone(t):                     # chasing the drone through the corn
-    im, d = canvas(); grad(d, 0, 110, (150, 190, 220), (220, 220, 200))
-    for k in range(3): R(d, (k * 140 - t * 6) % 440 - 40, 20 + k * 10, (k * 140 - t * 6) % 440 + 20, 24 + k * 10, (240, 240, 240))
-    d.polygon([(0, 104), (120, 96), (260, 102), (384, 94), (384, 112), (0, 112)], fill=(120, 140, 110))
-    corn(d, 110, 216, t, scroll=t * 120)
-    dx, dy = 230 + math.sin(t * 0.8) * 20, 40 + math.sin(t * 1.3) * 6
-    R(d, dx - 40, dy, dx + 40, dy + 2, (40, 50, 80))
-    for k in range(-40, 40, 6): d.line([dx + k, dy, dx + k, dy + 2], fill=(80, 100, 140))
-    R(d, dx - 6, dy - 3, dx + 6, dy + 4, (180, 180, 176)); R(d, dx - 2, dy + 4, dx + 2, dy + 6, (60, 60, 60))
-    R(d, 0, 158, W, 166, (170, 140, 100))
-    tx = 150 + math.sin(t * 3) * 4
-    truck(d, tx, 168, 1, col=(90, 110, 130), f=t)
-    person(d, tx + 28, 158, 'tom', 1); person(d, tx + 10, 154, 'murph', 1, 'wave')
+def s04_drone(t):                     # Cooper's pickup tearing through the corn after the drone
+    im, d = zcanvas(); grad(d, 0, 56, (150, 190, 220), (222, 222, 200), 0, ZW)
+    for k in range(2): R(d, (k * 90 - t * 4) % 220 - 20, 10 + k * 8, (k * 90 - t * 4) % 220 + 14, 12 + k * 8, (242, 242, 242))
+    d.polygon([(0, 54), (60, 50), (130, 53), (192, 48), (192, 58), (0, 58)], fill=(120, 140, 110))
+    def cornrow(y0, y1, sp, scroll, col, tip):
+        R(d, 0, y0, ZW, y1, col)
+        off = int(scroll) % sp
+        for x in range(-off, ZW + sp, sp):
+            sw = int(math.sin(t * 3 + x * 0.3) * 1.5)
+            d.line([x, y1, x + sw, y0 - 4], fill=tip); d.line([x + sw, y0 - 4, x + sw + 2, y0 - 6], fill=(220, 200, 110))
+    cornrow(56, 76, 3, t * 30, (110, 120, 50), (180, 170, 80))
+    # drone overhead: long dark solar wing
+    dx, dy = 120 + math.sin(t * 0.8) * 10, 22 + math.sin(t * 1.3) * 3
+    R(d, dx - 34, dy, dx + 34, dy + 1, (40, 50, 84))
+    for k in range(-34, 34, 5): d.point((dx + k, dy), fill=(90, 110, 150))
+    R(d, dx - 4, dy - 2, dx + 4, dy + 3, (190, 190, 186))
+    # the pickup, big, bouncing through the stalks
+    tx, ty = 46, 90 + int(math.sin(t * 9) * 1)
+    B = lambda a, b, c, e, col: R(d, tx + a, ty - b, tx + c, ty - e, col)
+    B(0, 6, 64, 18, (92, 112, 134)); B(34, 18, 56, 30, (92, 112, 134)); B(0, 18, 33, 20, (70, 86, 104))
+    B(37, 19, 54, 28, (150, 190, 210)); B(45, 19, 46, 28, (92, 112, 134))
+    B(57, 15, 66, 9, (220, 220, 210)); B(-1, 10, 1, 14, (200, 40, 40))
+    for wx in (12, 52):
+        d.ellipse([tx + wx - 8, ty - 14, tx + wx + 8, ty + 2], fill=(30, 30, 30)); d.ellipse([tx + wx - 3, ty - 9, tx + wx + 3, ty - 3], fill=(150, 150, 150))
+    # faces in the cab: Cooper driving, Murph and Tom beside him
+    for k, who in enumerate(['tom', 'murph', 'cooper']):
+        c = CAST[who]; fx = tx + 39 + k * 5
+        R(d, fx, ty - 26, fx + 3, ty - 22, SKIN); R(d, fx, ty - 27, fx + 3, ty - 25, c['hair'])
+        if who == 'murph': R(d, fx - 1, ty - 26, fx, ty - 22, c['hair'])
+    cornrow(92, 108, 4, t * 70, (90, 104, 40), (170, 160, 70))     # foreground stalks whipping past
     r = random.Random(int(t * 10))
-    for k in range(40): R(d, tx - r.randint(0, 120), 160 + r.randint(-6, 6), tx - r.randint(0, 120) + 2, 162 + r.randint(-6, 6), (200, 180, 140))
-    return im
+    for k in range(40):
+        x = tx - r.randint(0, 50); y = ty - r.randint(0, 24); R(d, x, y, x + 1, y + 1, (210, 190, 150))
+    return up(im)
 
 def s05_coords(t):                    # following the dust coordinates to a secret base
     im, d = canvas(); grad(d, 0, 140, (10, 12, 30), (40, 40, 70)); stars(d, 1, 120, 120, tw=int(t * 4))
@@ -110,6 +128,19 @@ def s07_goodbye(t):                   # the watch, the turned back
     else: watch(d, 176, 54, 2, ang=t)            # left on the bed
     return up(im)
 
+def s07b_watches(t):                  # close-up: the same watch on both wrists
+    im, d = zcanvas((60, 44, 34))
+    grad(d, 0, ZH, (110, 84, 62), (80, 60, 44), 0, ZW)
+    # Cooper's hand (right side) holding a watch out, his own matching watch on the wrist
+    R(d, 112, 54, 192, 72, (146, 112, 72)); R(d, 112, 56, 120, 70, (132, 162, 192))
+    R(d, 86, 56, 114, 70, SKIN); R(d, 80, 60, 88, 68, SKIN); R(d, 86, 70, 108, 72, shade(SKIN, .85))
+    watch(d, 128, 63, 5, ang=t * 6.28 / 6)
+    watch(d, 92, 50, 8, ang=t * 6.28 / 6)
+    # Murph's small hand (left), not taking it
+    k = clamp((t - 3) / 2)
+    R(d, 0, 66 + k * 10, 46 - k * 14, 76 + k * 10, (116, 128, 84)); R(d, 46 - k * 14, 67 + k * 10, 56 - k * 14, 75 + k * 10, SKIN)
+    return up(im)
+
 def s08_leave(t):                     # driving off; she runs out too late
     im, d = canvas(); grad(d, 0, 120, (210, 180, 140), (230, 200, 150))
     corn(d, 120, 216, t)
@@ -146,5 +177,5 @@ def s09_launch(t):                    # liftoff
 SCENES = [
     ('砂ぼこりの農場', s01_farm, 4), ('砂嵐が来る', s02_dust, 5), ('娘の部屋の「幽霊」', s03_ghost, 6),
     ('ドローンを追う', s04_drone, 5), ('砂の座標が示す場所へ', s05_coords, 8), ('隠されたNASA', s06_nasa, 8),
-    ('時計を渡す別れ', s07_goodbye, 4), ('間に合わなかった娘', s08_leave, 8), ('打ち上げ', s09_launch, 7),
+    ('時計を渡す別れ', s07_goodbye, 4), ('おそろいの時計', s07b_watches, 4), ('間に合わなかった娘', s08_leave, 8), ('打ち上げ', s09_launch, 7),
 ]

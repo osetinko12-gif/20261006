@@ -82,6 +82,31 @@ def s15_wave(t):                      # those aren't mountains...
     tars(d, 150 + t * 4, 200, f=t * 10, walk=True); astro(d, 160 + t * 4, 178, -1, s=0.8)
     return im
 
+def helmet_face(d, cx, by, who, s=2, tint=(40, 50, 64), refl=None, **kw):
+    """Face seen through a round space-helmet visor."""
+    im = d._image
+    R(d, cx - 22 * s, by - 8 * s, cx + 22 * s, by, (232, 232, 226))                       # shoulders
+    R(d, cx - 22 * s, by - 8 * s, cx - 14 * s, by, (196, 198, 192))
+    d.ellipse([cx - 17 * s, by - 44 * s, cx + 17 * s, by - 4 * s], fill=(232, 232, 226))  # helmet shell
+    d.ellipse([cx - 17 * s, by - 44 * s, cx - 4 * s, by - 4 * s], fill=(204, 206, 200))
+    d.ellipse([cx - 13 * s, by - 39 * s, cx + 13 * s, by - 10 * s], fill=tint)          # visor
+    face = Image.new('RGB', im.size, tint); fd = ImageDraw.Draw(face)
+    portrait(fd, cx, by - 6 * s, who, s, **kw)
+    mask = Image.new('L', im.size, 0)
+    ImageDraw.Draw(mask).ellipse([cx - 12 * s, by - 38 * s, cx + 12 * s, by - 11 * s], fill=255)
+    im.paste(face, (0, 0), mask)
+    if refl:
+        for k in range(3): R(d, cx + (5 + k * 2) * s, by - (34 - k * 3) * s, cx + (8 + k * 2) * s, by - (33 - k * 3) * s, refl)
+    R(d, cx - 4 * s, by - 9 * s, cx + 4 * s, by - 7 * s, (150, 150, 146))
+
+def s15b_lookup(t):                   # close-up: Cooper looks up at the wave
+    im, d = zcanvas()
+    k = clamp(t / 4)
+    grad(d, 0, ZH, mix((150, 160, 170), (80, 110, 130), k), mix((120, 140, 156), (50, 80, 100), k), 0, ZW)
+    for x in range(0, ZW, 2): R(d, x, 6 + k * 4 + math.sin(x * 0.2 + t * 4), x + 1, 7 + k * 4, (230, 240, 240))
+    helmet_face(d, 96, 108, 'cooperS', 2, refl=(200, 220, 230), shock=True)
+    return shake(up(im), 2 if t > 2 else 0, int(t * 24))
+
 def s16_escape(t):                    # liftoff as the wave breaks
     im, d = canvas(); grad(d, 0, 216, (150, 160, 170), (196, 200, 200))
     k = clamp(t / 8)
@@ -112,7 +137,7 @@ def stars_box(d, x0, y0, x1, y1, seed=2):
 
 def s17_23years(t):                   # back aboard: Romilly has aged 23 years
     im, d = zcanvas(); ship_interior(d)
-    portrait(d, 150, 100, 'romillyO', 2)
+    person(d, 150, 100, 'romillyO', -1)
     person(d, 62 - clamp((t - 2) / 1) * 4, 100, 'cooperS', 1, shock=t > 2)
     person(d, 40, 100, 'brand', 1, 'cover' if t > 2.5 else 'stand', shock=t > 2)
     # hourglass
@@ -151,7 +176,7 @@ def s19_murph(t):                     # on Earth: grown-up Murph at the professo
 
 SCENES = [
     ('宇宙船エンデュランス', s10_orbit, 6), ('土星を越えて', s11_saturn, 6), ('ワームホール', s12_wormhole, 8),
-    ('ワームホールの中', s13_inside, 4), ('水の惑星', s14_miller, 4), ('「山」ではなかった', s15_wave, 6),
+    ('ワームホールの中', s13_inside, 4), ('水の惑星', s14_miller, 4), ('「山」ではなかった', s15_wave, 6), ('波を見上げる', s15b_lookup, 3),
     ('間一髪の脱出', s16_escape, 5), ('23年が過ぎていた', s17_23years, 4), ('届いていたビデオ', s18_messages, 12),
     ('地球：大人になった娘', s19_murph, 7),
 ]

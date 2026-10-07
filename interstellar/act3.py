@@ -19,9 +19,13 @@ def s20_ice(t):                       # Mann's frozen world
 def s21_mann(t):                      # the hero wakes from cryosleep
     im, d = zcanvas()
     grad(d, 0, ZH, (180, 190, 200), (140, 150, 160), 0, ZW)
-    R(d, 20, 50, 110, 80, (220, 226, 232)); R(d, 22, 52, 108, 66, (150, 200, 230))
-    portrait(d, 66, 72, 'mann', 1.4, cry=t > 2, beard=(140, 110, 80))
-    for k in range(int(t * 8) % 20): d.point((24 + (k * 13) % 84, 54 + (k * 7) % 12), fill=(240, 250, 255))
+    R(d, 0, 92, ZW, ZH, (120, 130, 140))
+    R(d, 30, 78, 100, 92, (220, 226, 232)); R(d, 32, 80, 98, 84, (150, 200, 230))      # cryo pod
+    d.polygon([(30, 78), (36, 58), (104, 58), (100, 78)], fill=(190, 220, 236))          # lid swung open
+    d.polygon([(34, 76), (39, 61), (100, 61), (97, 76)], fill=(160, 200, 224))
+    person(d, 60, 92, 'mann', 1, 'sit', cry=t > 2)
+    r = random.Random(int(t * 6))
+    for k in range(24): d.point((32 + r.randrange(66), 50 + r.randrange(40)), fill=(240, 250, 255))
     person(d, 140, 100, 'cooperS', -1); person(d, 160, 100, 'brand', -1)
     return up(im)
 
@@ -65,6 +69,20 @@ def s24_docking(t):                   # matching the spin
     for n in range(3): d.line([rx - 40 - n * 8, ry - 4 + n, rx - 34 - n * 8, ry - 4 + n], fill=(150, 200, 255))
     return im
 
+def s24b_cockpit(t):                  # close-up: Cooper fighting the spin
+    im, d = zcanvas((10, 10, 16))
+    a = t * 2.6
+    for k in range(40):                          # stars wheeling past the window
+        rr = 20 + (k * 37) % 90; aa = a + k * 0.7
+        x = 96 + math.cos(aa) * rr; y = 40 + math.sin(aa) * rr * 0.6
+        d.line([x, y, 96 + math.cos(aa - 0.12) * rr, 40 + math.sin(aa - 0.12) * rr * 0.6], fill=(200, 200, 230))
+    R(d, 0, 66, ZW, ZH, (50, 52, 58)); d.polygon([(0, 0), (30, 0), (10, 66), (0, 66)], fill=(50, 52, 58)); d.polygon([(192, 0), (162, 0), (182, 66), (192, 66)], fill=(50, 52, 58))
+    warn = int(t * 4) % 2
+    for k in range(6): R(d, 20 + k * 28, 72, 30 + k * 28, 76, (230, 60, 50) if (warn + k) % 2 else (70, 70, 76))
+    portrait(d, 96, 108, 'cooperS', 1.6)
+    R(d, 116, 92, 126, 100, (40, 40, 44)); R(d, 112, 90, 118, 96, SKIN)                  # hand on the stick
+    return shake(up(im), 1, int(t * 24))
+
 def s25_gargantua(t):                 # Gargantua
     im, d = canvas((0, 0, 0)); stars(d, 25, 200)
     gargantua(d, 192, 100, 46, t)
@@ -100,6 +118,6 @@ def s27_fall(t):                      # into the dark
 
 SCENES = [
     ('氷の惑星', s20_ice, 6), ('英雄マン博士の目覚め', s21_mann, 4), ('裏切り', s22_betrayal, 6),
-    ('ドッキングの暴走、爆発', s23_explosion, 4.5), ('回転に合わせてドッキング', s24_docking, 6),
+    ('ドッキングの暴走、爆発', s23_explosion, 4.5), ('回転に合わせてドッキング', s24_docking, 6), ('操縦かんを握る', s24b_cockpit, 3),
     ('ブラックホール「ガルガンチュア」', s25_gargantua, 6), ('ひとり切り離す', s26_detach, 6), ('ブラックホールの中へ', s27_fall, 6),
 ]
