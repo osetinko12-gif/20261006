@@ -1,0 +1,91 @@
+1
+00:00:00,000 --> 00:00:08,080
+Dear YouTube team, I run the channel "Kigen ga Sematteimasu" (The Deadline Is Approaching).
+
+2
+00:00:08,530 --> 00:00:18,920
+The channel URL, shown on screen, is youtube.com/@期限が迫っています
+
+3
+00:00:19,370 --> 00:00:31,020
+I am sending this video to explain the creative intent and production process behind my content, regarding the "low-satisfaction or disturbing content" decision.
+
+4
+00:00:32,070 --> 00:00:39,733
+This channel produces original fiction in the genres known as analog horror and fake documentary (mockumentary).
+
+5
+00:00:40,183 --> 00:00:53,779
+What TV commercials would air if Japan had collapsed and people lived in underground shelters? I depict this fictional world in the style of Showa- and Heisei-era Japanese TV ads.
+
+6
+00:00:54,829 --> 00:01:01,737
+Each video is not a standalone clip but part of a series built on a single shared world setting.
+
+7
+00:01:02,187 --> 00:01:11,276
+Christmas, New Year, Osaka: each episode portrays life after the collapse in a different season or region.
+
+8
+00:01:12,326 --> 00:01:18,749
+I do all of the planning, scriptwriting and editing myself.
+
+9
+00:01:19,199 --> 00:01:35,796
+Much of the footage is made with AI generation tools, but I write the prompts for every scene myself and repeat generation and selection until I get the direction I want. Some works are also made by hand, without AI.
+
+10
+00:01:36,846 --> 00:01:49,143
+These are prompt notes I wrote myself. Product names, concepts, cut-by-cut structure and even costumes: I design each commercial myself.
+
+11
+00:01:49,593 --> 00:02:01,253
+One of the generation services I used has shut down, so its screens no longer exist, but many notes for each work remain.
+
+12
+00:02:01,703 --> 00:02:10,813
+Generated footage is organized by region of the fictional world, such as "Former Tokyo" and "Former Hokkaido", and I select the usable cuts.
+
+13
+00:02:11,263 --> 00:02:21,230
+Then in Final Cut Pro, I place the footage, captions, narration and sound effects cut by cut.
+
+14
+00:02:21,680 --> 00:02:26,200
+I also create product logos and captions for each work.
+
+15
+00:02:26,650 --> 00:02:35,775
+I adjust effects such as old film and bad-TV signal myself to recreate the texture of broadcasts from that era.
+
+16
+00:02:36,825 --> 00:02:44,597
+The first video in the series has over 220,000 views and more than 350 comments.
+
+17
+00:02:45,047 --> 00:02:51,292
+In the comments, viewers enjoy discussing the fictional products and the world setting with each other.
+
+18
+00:02:51,742 --> 00:03:00,643
+When I posted after a long break, viewers said they had been waiting and that they look forward to new episodes of the Collapsed Japan series.
+
+19
+00:03:01,693 --> 00:03:06,572
+These works are not made simply to shock viewers.
+
+20
+00:03:07,022 --> 00:03:20,906
+Through the gap between cheerful advertising and a collapsed world, they satirize disaster preparedness and consumer society, and viewers enjoy them as a single continuing story.
+
+21
+00:03:21,956 --> 00:03:31,058
+The channel description clearly states that all works are fiction and that AI generation tools are used.
+
+22
+00:03:31,508 --> 00:03:45,218
+Going forward, I will add explanations of the setting and intent to each video description, avoid shock-only titles and thumbnails, and add a fiction / horror notice at the start of videos.
+
+23
+00:03:46,268 --> 00:03:54,152
+Thank you for your time. I would appreciate it if you could review my channel again. Thank you for watching.

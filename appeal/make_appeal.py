@@ -35,7 +35,7 @@ SECTIONS = [
          sub='チャンネル「期限が迫っています。」', url=URL,
          lines=['YouTube ご担当者様。チャンネル「期限が迫っています。」を運営している者です。',
                 'チャンネルのURLは、画面に表示している、ユーチューブドットコム、スラッシュ、アット、期限が迫っています、です。',
-                '「満足度の低い、または不快なコンテンツ」との判定について、制作の意図と工程をご説明させていただきたく、この動画をお送りします。']),
+                '「満足度の低い、または不快なコンテンツ」との判定について、創作の意図と工程をご説明させていただきたく、この動画をお送りします。']),
     dict(kind='grid', title='チャンネルについて',
          lines=['本チャンネルでは、アナログホラー、フェイクドキュメンタリーと呼ばれる創作ジャンルの映像作品を制作しています。',
                 'もしも日本が崩壊し、人々が地下シェルターで暮らしていたら、どんなテレビCMが流れているのか。そんな架空の世界を、昭和や平成のテレビ広告の様式で描いています。']),
@@ -87,6 +87,32 @@ SECTIONS = [
     dict(kind='title', title='ご覧いただき、ありがとうございました',
          sub='チャンネル「期限が迫っています。」', url=URL,
          lines=['お忙しいところ恐縮ですが、改めてご審査いただけますと幸いです。ご覧いただき、ありがとうございました。']),
+]
+
+EN = [  # 英語字幕（YouTubeに字幕トラックとして追加する用）
+    'Dear YouTube team, I run the channel "Kigen ga Sematteimasu" (The Deadline Is Approaching).',
+    'The channel URL, shown on screen, is youtube.com/@期限が迫っています',
+    'I am sending this video to explain the creative intent and production process behind my content, regarding the "low-satisfaction or disturbing content" decision.',
+    'This channel produces original fiction in the genres known as analog horror and fake documentary (mockumentary).',
+    'What TV commercials would air if Japan had collapsed and people lived in underground shelters? I depict this fictional world in the style of Showa- and Heisei-era Japanese TV ads.',
+    'Each video is not a standalone clip but part of a series built on a single shared world setting.',
+    'Christmas, New Year, Osaka: each episode portrays life after the collapse in a different season or region.',
+    'I do all of the planning, scriptwriting and editing myself.',
+    'Much of the footage is made with AI generation tools, but I write the prompts for every scene myself and repeat generation and selection until I get the direction I want. Some works are also made by hand, without AI.',
+    'These are prompt notes I wrote myself. Product names, concepts, cut-by-cut structure and even costumes: I design each commercial myself.',
+    'One of the generation services I used has shut down, so its screens no longer exist, but many notes for each work remain.',
+    'Generated footage is organized by region of the fictional world, such as "Former Tokyo" and "Former Hokkaido", and I select the usable cuts.',
+    'Then in Final Cut Pro, I place the footage, captions, narration and sound effects cut by cut.',
+    'I also create product logos and captions for each work.',
+    'I adjust effects such as old film and bad-TV signal myself to recreate the texture of broadcasts from that era.',
+    'The first video in the series has over 220,000 views and more than 350 comments.',
+    'In the comments, viewers enjoy discussing the fictional products and the world setting with each other.',
+    'When I posted after a long break, viewers said they had been waiting and that they look forward to new episodes of the Collapsed Japan series.',
+    'These works are not made simply to shock viewers.',
+    'Through the gap between cheerful advertising and a collapsed world, they satirize disaster preparedness and consumer society, and viewers enjoy them as a single continuing story.',
+    'The channel description clearly states that all works are fiction and that AI generation tools are used.',
+    'Going forward, I will add explanations of the setting and intent to each video description, avoid shock-only titles and thumbnails, and add a fiction / horror notice at the start of videos.',
+    'Thank you for your time. I would appreciate it if you could review my channel again. Thank you for watching.',
 ]
 
 def wrap(text, font, maxw):
@@ -225,8 +251,10 @@ for si, s in enumerate(SECTIONS):
 
 with open(os.path.join(BUILD, 'list.txt'), 'w') as o:
     o.writelines(f"file '{c}'\n" for c in clips)
-out = os.path.join(ROOT, 'appeal_draft.mp4')
+out = os.path.join(ROOT, 'appeal_final.mp4')
 subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0',
                 '-i', os.path.join(BUILD, 'list.txt'), '-c', 'copy', out], check=True)
-open(os.path.join(ROOT, 'appeal_draft.srt'), 'w', encoding='utf-8').write('\n'.join(srt))
+open(os.path.join(ROOT, 'appeal_ja.srt'), 'w', encoding='utf-8').write('\n'.join(srt))
+en = [b.split('\n')[:2] + [EN[i]] for i, b in enumerate(srt)]
+open(os.path.join(ROOT, 'appeal_en.srt'), 'w', encoding='utf-8').write('\n'.join('\n'.join(x) + '\n' for x in en))
 print(f'{out}  {t:.1f}s')
