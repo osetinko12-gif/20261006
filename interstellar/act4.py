@@ -31,8 +31,9 @@ def s29_behind(t):                    # behind the shelf: the "ghost" was him
     push = clamp((t - 2) / 1.5)
     R(d, 120 - push * 6, 26, 123 - push * 6, 35, (170, 50, 40))
     astro(d, 170, 100, -1, 'reach', visor=(70, 90, 120), s=1.4)
-    if t > 4: bubble(d, 150, 40, '!')
-    return up(im)
+    im = up(im)
+    if t > 4: im = glow(im, 194, 100, 90 * clamp((t - 4) / 1.5), (255, 210, 130), 0.55)
+    return im
 
 def s30_watch(t):                     # the second hand ticks in Morse
     im, d = zcanvas((24, 18, 14))
@@ -52,10 +53,11 @@ def s31_eureka(t):                    # grown Murph understands
     zroom(d, light=(255, 150, 70), dark=True)
     r = random.Random(int(t * 8))
     for k in range(20): d.point((120 + r.randrange(34), 18 + r.randrange(34)), fill=(255, 220, 120))
-    portrait(d, 92, 108, 'murphA', 2, cry=t > 3, smile=t > 6)
+    portrait(d, 92, 108, 'murphA', 2, cry=t > 3, smile=t > 6, shock=3 < t <= 6)
     watch(d, 60, 92, 5, ang=t * 4)
-    if t > 4: bubble(d, 112, 30, '!')
-    return up(im)
+    im = up(im)
+    if t > 4: im = glow(im, 120, 184, 140 * clamp((t - 4) / 2), (255, 200, 120), 0.5)
+    return im
 
 def s32_papers(t):                    # papers in the air, the corn on fire
     im, d = canvas(); grad(d, 0, 140, (60, 30, 30), (230, 120, 60))
@@ -87,7 +89,7 @@ def s33_station(t):                   # Cooper Station: the world curves overhea
         R(d, x + 16, 152, x + 24, 166, (120, 90, 70))
     bx, by = 60 + t * 30, 150 - math.sin(t * 0.8) * 100
     R(d, bx, by, bx + 2, by + 2, (255, 255, 255))
-    person(d, 300, 196, 'cooper', -1); bubble(d, 296, 152, '?')
+    person(d, 300, 196, 'cooper', -1, 'shade', shock=True)
     return im
 
 def s34_family(t):                    # old Murph, surrounded by her family
@@ -108,8 +110,9 @@ def s35_hands(t):                     # father, younger than his daughter
     portrait(d, 54, 108, 'murphO', 2.2, grey=True, cry=t > 2, smile=t > 6)
     portrait(d, 140, 108, 'cooperS', 2.2, cry=t > 2)
     R(d, 82, 92, 112, 98, SKIN); R(d, 96, 90, 98, 100, shade(SKIN, .85))
-    if t > 7: bubble(d, 90, 22, 'heart')
-    return up(im)
+    im = up(im)
+    if t > 6: im = glow(im, 192, 190, 160 * clamp((t - 6) / 3), (255, 220, 170), 0.22)
+    return im
 
 def s36_depart(t):                    # he takes a ship and goes to find her
     im, d = canvas((2, 3, 10)); stars(d, 36, 200)

@@ -31,7 +31,6 @@ def s02_dust(t):                      # the dust wall over the ball game
     for k in range(6):
         px = 200 + k * 16 - t * 18 * (k % 2 + 1)
         person(d, px, 190 + (k % 3) * 8, ['tom', 'murph', 'cooper', 'donald', 'tom', 'cooper'][k], -1, 'run', f=t * 8 + k)
-    bubble(d, 260 - t * 20, 160, '!')
     return im
 
 def s03_ghost(t):                     # Murph's room: fallen book, dust lines
@@ -76,7 +75,9 @@ def s05_coords(t):                    # following the dust coordinates to a secr
     tx = 40 + t * 8
     truck(d, tx, 170, 1, col=(90, 110, 130), f=t)
     d.polygon([(tx + 42, 166), (tx + 140, 156), (tx + 140, 176)], fill=(80, 78, 64))
-    if t > 6: bubble(d, tx + 18, 140, '!')
+    if t > 6:                                    # caught in a searchlight
+        d.polygon([(250, 0), (tx - 10, 176), (tx + 60, 176), (290, 0)], fill=(150, 150, 130))
+        truck(d, tx, 170, 1, col=(150, 170, 190), f=t)
     return im
 
 def s06_nasa(t):                      # NASA hidden in a silo; the professor's plan
@@ -107,7 +108,6 @@ def s07_goodbye(t):                   # the watch, the turned back
     person(d, 116, 102, 'cooper', -1, 'give' if t < 7 else 'stand')
     if t < 7: watch(d, 104, 84, 2)
     else: watch(d, 176, 54, 2, ang=t)            # left on the bed
-    if t > 2: bubble(d, 74, 60, '...')
     return up(im)
 
 def s08_leave(t):                     # driving off; she runs out too late

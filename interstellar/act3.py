@@ -32,11 +32,11 @@ def s22_betrayal(t):                  # on the ridge: Mann turns on Cooper
     d.polygon([(0, 80), (192, 86), (192, 108), (0, 108)], fill=(206, 214, 222))
     shove = clamp((t - 3) / 1.5)
     astro(d, 90 - shove * 6, 88, 1, 'reach' if t < 6 else 'stand', visor=(80, 110, 140), s=1.3)
-    astro(d, 116 + shove * 14, 88 + shove * 6, -1, 'stand', visor=(70, 100, 130), crack=t > 5, s=1.3)
-    if t > 5:
-        for k in range(14): d.point((112 + shove * 14 + (k * 5) % 16 - 8, 40 + (k * 3) % 12), fill=(240, 250, 255))
-        bubble(d, 112 + shove * 14, 30, '!')
-    return up(im)
+    astro(d, 116 + shove * 14, 88 + shove * 6 + (6 if t > 5 else 0), -1, 'stand', visor=(70, 100, 130), crack=t > 5, s=1.3)
+    if t > 5:                                    # air hissing out of the cracked visor
+        r = random.Random(int(t * 12))
+        for k in range(18): d.point((112 + shove * 14 + r.randint(-10, 10), 46 + r.randint(-8, 6)), fill=(240, 250, 255))
+    return shake(up(im), 3 if 3.2 < t < 3.8 or 5 < t < 5.4 else 0, int(t * 24))
 
 def boom(d, cx, cy, k, seed=1):
     r = random.Random(seed)

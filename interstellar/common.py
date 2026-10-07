@@ -56,7 +56,7 @@ CAST = {
     'donald':  dict(hair=(230, 230, 230), top=(150, 70, 60), bot=(80, 70, 60), h=28, glasses=True),
 }
 
-def person(d, x, y, who='cooper', face=1, pose='stand', f=0, beard=None, cry=False, tilt=0):
+def person(d, x, y, who='cooper', face=1, pose='stand', f=0, beard=None, cry=False, tilt=0, shock=False):
     """x = centre, y = feet."""
     c = CAST[who]; h = c['h']; s = h / 30
     sk = c.get('skin', SKIN); beard = beard or c.get('beard')
@@ -73,6 +73,9 @@ def person(d, x, y, who='cooper', face=1, pose='stand', f=0, beard=None, cry=Fal
         B(-2, 6, 6, 9, bot); B(4, 0, 6, 6, bot); B(4, 0, 7, 1, (40, 34, 30))
     elif pose == 'lie':
         return lie(d, x, y, who, face)
+    elif pose == 'kneel':
+        y = y + 6 * s; Y = lambda dy: y - dy * s
+        B(-2.5, 0, 4, 3, bot); B(-2.5, 3, -0.5, 6, bot)
     else:
         B(-2.5, 0, -0.5, 11, bot); B(0.5, 0, 2.5, 11, shade(bot, .8))
         B(-2.5, 0, -0.5, 1, (40, 34, 30)); B(0.5, 0, 3, 1, (40, 34, 30))
@@ -84,6 +87,10 @@ def person(d, x, y, who='cooper', face=1, pose='stand', f=0, beard=None, cry=Fal
         B(2.5, 19, 9, 17, top); B(9, 19, 10.5, 17, sk)
     elif pose == 'wave':
         B(2.5, 20, 4.5, 28, top); B(3, 28, 4.5, 30, sk)
+    elif pose == 'cover':
+        B(2.5, 20, 4.5, 23, top); B(1.5, 22.5, 4, 24.5, sk)
+    elif pose == 'shade':
+        B(2.5, 20, 4.5, 27, top); B(1.5, 27, 4.5, 28.5, sk)
     elif pose == 'arms_up':
         B(-5, 20, -3.5, 28, top); B(3.5, 20, 5, 28, top); B(-5, 28, -3.5, 30, sk); B(3.5, 28, 5, 30, sk)
     elif pose == 'run':
@@ -98,6 +105,7 @@ def person(d, x, y, who='cooper', face=1, pose='stand', f=0, beard=None, cry=Fal
     if c.get('long'): B(-3.5, hy - 3, -1.5, hy + 6, hair); B(-2, hy - 2, -1, hy + 1, hair)
     if c.get('ponytail'): B(-5, hy + 1, -3.5, hy + 6, hair); B(-5.5, hy - 2, -4.5, hy + 2, hair)
     d.point((X(1.6), Y(hy + 3.6)), fill=(30, 24, 20))
+    if shock: d.point((X(1.6), Y(hy + 4.6)), fill=(30, 24, 20)); d.point((X(1.8), Y(hy + 1)), fill=(90, 40, 40))
     if c.get('glasses'): B(0.5, hy + 4.2, 3, hy + 4.2, (40, 40, 40))
     if c.get('stubble') and not beard: B(-1, hy, 3, hy + 1, shade(sk, .82))
     if beard: B(-1.5, hy - 0.5, 3, hy + 2.5, beard)
@@ -316,7 +324,7 @@ def zroom(d, light=(240, 210, 150), dark=False, dust=0.0, t=0.0):
             x = 120 + r.randrange(34); y = 18 + (r.randrange(34) + t * 10 * r.random()) % 34
             d.point((x, y), fill=(220, 190, 140))
 
-def portrait(d, cx, by, who='cooper', s=1, cry=False, beard=None, grey=False, smile=False):
+def portrait(d, cx, by, who='cooper', s=1, cry=False, beard=None, grey=False, smile=False, shock=False, light=0.0):
     """Head-and-shoulders bust. cx = centre, by = bottom edge. ~ 26*s tall."""
     c = CAST[who]; hair = (210, 210, 210) if grey else c['hair']
     sk = c.get('skin', SKIN); beard = beard or c.get('beard')
@@ -332,7 +340,28 @@ def portrait(d, cx, by, who='cooper', s=1, cry=False, beard=None, grey=False, sm
     B(-4, 20, -1, 19.5, shade(hair, .8)); B(1, 20, 4, 19.5, shade(hair, .8))
     if c.get('glasses'): B(-5, 19, -1, 16, (40, 40, 40)); B(1, 19, 5, 16, (40, 40, 40)); B(-4, 18.5, -2, 16.5, (200, 220, 230)); B(2, 18.5, 4, 16.5, (200, 220, 230)); B(-1, 18, 1, 17.5, (40, 40, 40))
     if c.get('stubble') and not beard: B(-6, 10, 6, 13, shade(sk, .85))
-    if smile: B(-2, 13, 2, 12.5, (150, 70, 60))
+    if shock:
+        B(-5, 19.5, -1, 16, (250, 250, 250)); B(1, 19.5, 5, 16, (250, 250, 250))
+        B(-3.5, 18.5, -2, 17, (30, 24, 20)); B(2.5, 18.5, 4, 17, (30, 24, 20))
+        B(-4, 21.5, -1, 21, shade(hair, .8)); B(1, 21.5, 4, 21, shade(hair, .8))
+        B(-1.5, 14, 1.5, 11.5, (90, 40, 40))
+    elif smile: B(-3, 13, 3, 12.5, (150, 70, 60)); B(-3, 13.5, -2, 13, (150, 70, 60)); B(2, 13.5, 3, 13, (150, 70, 60))
     else: B(-2, 13, 2, 12.5, (170, 110, 90))
     if beard: B(-7, 10, 7, 14, beard); B(-3, 13, 3, 12, (150, 70, 60))
     if cry: B(-4, 16.5, -3, 13, (130, 190, 255)); B(3, 16.5, 4, 14, (130, 190, 255))
+    if light: B(-7, 25, 7, 10, None) if False else None
+
+
+def glow(im, cx, cy, r, col=(255, 220, 150), k=0.5):
+    """Soft additive light pool (used for 'realisation' moments instead of symbols)."""
+    from PIL import ImageChops
+    g = Image.new('RGB', im.size, (0, 0, 0)); gd = ImageDraw.Draw(g)
+    for n in range(8, 0, -1):
+        rr = r * n / 8
+        gd.ellipse([cx - rr, cy - rr, cx + rr, cy + rr], fill=shade(col, k * (1 - n / 9)))
+    return ImageChops.add(im, g)
+
+def shake(im, amt, seed):
+    if amt <= 0: return im
+    r = random.Random(seed); dx, dy = r.randint(-amt, amt), r.randint(-amt, amt)
+    out = Image.new('RGB', im.size, (0, 0, 0)); out.paste(im, (dx, dy)); return out

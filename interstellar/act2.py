@@ -80,7 +80,6 @@ def s15_wave(t):                      # those aren't mountains...
     ranger(d, 250, 170, 1.2, -1)
     astro(d, 190 + t * 3, 196, 1, 'run', f=t * 8)
     tars(d, 150 + t * 4, 200, f=t * 10, walk=True); astro(d, 160 + t * 4, 178, -1, s=0.8)
-    if t > 1: bubble(d, 196, 150, '!')
     return im
 
 def s16_escape(t):                    # liftoff as the wave breaks
@@ -114,8 +113,8 @@ def stars_box(d, x0, y0, x1, y1, seed=2):
 def s17_23years(t):                   # back aboard: Romilly has aged 23 years
     im, d = zcanvas(); ship_interior(d)
     portrait(d, 150, 100, 'romillyO', 2)
-    person(d, 62, 100, 'cooperS', 1); person(d, 42, 100, 'brand', 1)
-    if t > 3: bubble(d, 56, 58, '!')
+    person(d, 62 - clamp((t - 2) / 1) * 4, 100, 'cooperS', 1, shock=t > 2)
+    person(d, 40, 100, 'brand', 1, 'cover' if t > 2.5 else 'stand', shock=t > 2)
     # hourglass
     hx, hy = 100, 30
     d.polygon([(hx - 6, hy - 8), (hx + 6, hy - 8), (hx, hy)], fill=(230, 220, 180)); d.polygon([(hx - 6, hy + 8), (hx + 6, hy + 8), (hx, hy)], fill=(230, 220, 180))
@@ -147,8 +146,7 @@ def s19_murph(t):                     # on Earth: grown-up Murph at the professo
         d.line(pts, fill=(230, 230, 220))
     R(d, 110, 76, 180, 86, (220, 220, 220)); R(d, 110, 70, 180, 77, (180, 200, 220)); R(d, 112, 86, 114, 100, (150, 150, 150)); R(d, 176, 86, 178, 100, (150, 150, 150))
     R(d, 112, 66, 124, 74, (240, 240, 240)); R(d, 114, 64, 122, 70, SKIN); R(d, 113, 63, 123, 65, (220, 220, 220))
-    person(d, 100, 100, 'murphA', 1, cry=t > 5)
-    if t > 6: bubble(d, 92, 56, '!')
+    person(d, 100 - clamp((t - 5) / 1) * 6, 100, 'murphA', 1, 'cover' if t > 5 else 'stand', cry=t > 5, shock=t > 5)
     return up(im)
 
 SCENES = [
