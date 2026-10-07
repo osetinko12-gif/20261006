@@ -2,3 +2,4 @@ reel/out/*.png
 reel/out/*.wav
 reel/out/list.txt
 __pycache__/
+interstellar/out/
