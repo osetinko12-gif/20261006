@@ -1,4 +1,4 @@
-import json, numpy as np
+import json, os, numpy as np
 from scipy.signal import butter, sosfilt, fftconvolve
 from scipy.io import wavfile
 
@@ -37,7 +37,7 @@ def drip(f0=1400):
     ph = 2 * np.pi * np.cumsum(f) / SR
     return np.sin(ph) * np.exp(-t * 18) * 0.5
 for t0, f0, p in [(0.5, 1500, -0.4), (2.3, 1250, 0.5), (7.8, 1600, -0.6), (12.4, 1350, 0.3), (26.0, 1450, 0.6)]:
-    add(drip(f0), t0, 0.35, p)
+    add(drip(f0), t0, 0.12, p)
 
 # --- cave drone (whole piece, swells)
 drone = np.zeros(N)
@@ -54,9 +54,9 @@ add(drone * dEnv + tens_sig + rise, 0, 1.0)
 # --- torch ignition
 n = int(1.4 * SR); t = np.arange(n) / SR
 w = lp(rng.standard_normal(n), 2500) * (1 - np.exp(-t * 30)) * np.exp(-t * 2.8)
-add(w * 0.55, 3.85, 1.0, -0.2)
+add(w * 0.3, 3.85, 1.0, -0.2)
 thump = np.sin(2 * np.pi * 70 * t * np.exp(-t * 2)) * np.exp(-t * 7)
-add(thump * 0.45, 3.9)
+add(thump * 0.22, 3.9)
 
 # --- fire bed + crackles (4 -> 21.3)
 fe = env(4.0, 21.3, 0.6, 0.05)
@@ -79,16 +79,16 @@ for i in range(8):
     f = 620 * (1.06 ** i)
     s = (np.sin(2 * np.pi * f * t) + 0.4 * np.sin(2 * np.pi * f * 2.76 * t)) * np.exp(-t * 22)
     s += hp(rng.standard_normal(n), 2000) * np.exp(-t * 200) * 0.3
-    add(s * 0.28, t0, 1.0, -0.5 + i / 7)
+    add(s * 0.16, t0, 1.0, -0.5 + i / 7)
 
 # --- galloping hooves on toggles
-TOG = json.load(open('toggles.json'))
+TOG = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'toggles.json')))
 for j, t0 in enumerate(TOG):
     n = int(0.3 * SR); t = np.arange(n) / SR
     g = 0.35 + 0.65 * (j / len(TOG))
     s = np.sin(2 * np.pi * (75 + 30 * np.exp(-t * 40)) * t) * np.exp(-t * 16)
     s += lp(rng.standard_normal(n), 1800) * np.exp(-t * 45) * 0.5
-    add(s * 0.55 * g, t0, 1.0, (-0.25 if j % 2 else 0.25))
+    add(s * 0.32 * g, t0, 1.0, (-0.25 if j % 2 else 0.25))
 # heartbeat-like swell under flicker
 # --- riser into flare
 n = int(1.0 * SR); t = np.arange(n) / SR
@@ -97,7 +97,7 @@ add(rs * 0.35, 20.35)
 # flare impact
 n = int(3.0 * SR); t = np.arange(n) / SR
 imp = np.sin(2 * np.pi * 48 * t * np.exp(-t * 0.6)) * np.exp(-t * 2.2) * 0.8 + lp(rng.standard_normal(n), 3000) * np.exp(-t * 9) * 0.35
-add(imp, 21.33, 0.8)
+add(imp, 21.33, 0.4)
 
 # --- spray (blow pipe) pulses
 for k, t0 in enumerate([22.0, 22.42, 22.82, 23.25, 23.65]):
@@ -114,7 +114,7 @@ add(bp(rng.standard_normal(n), 300, 2500) * np.sin(np.pi * t / 0.9) ** 2 * 0.12,
 n = int(5.5 * SR); t = np.arange(n) / SR
 boom = np.sin(2 * np.pi * 36 * t + 3 * np.exp(-t * 4)) * np.exp(-t * 1.3) * 0.9
 bell = sum(a * np.sin(2 * np.pi * f * t) * np.exp(-t * d) for f, a, d in [(220, 0.25, 0.9), (330.2, 0.15, 1.1), (440.5, 0.12, 1.4), (593, 0.08, 1.8), (881, 0.05, 2.4)])
-add(boom, 25.35, 0.9)
+add(boom, 25.35, 0.45)
 add(bell, 25.35, 0.55, 0.0)
 pad = np.zeros(N)
 for f in [55, 110, 164.8, 220, 261.6, 329.6]:
@@ -137,6 +137,6 @@ outL = L / peak + wetL * 0.32
 outR = R / peak + wetR * 0.32
 fade = np.clip((DUR - tt) / 1.0, 0, 1)
 out = np.stack([outL, outR], 1) * fade[:, None]
-out = np.tanh(out * 1.1) * 0.89
-wavfile.write('audio.wav', SR, (out * 32767).astype(np.int16))
+out = out * 0.68  # ナレーション部分より約 10dB 小さく
+wavfile.write(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ep1', 'build', 'coldopen.wav'), SR, (out * 32767).astype(np.int16))
 print('ok', out.shape)
