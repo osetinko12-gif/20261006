@@ -28,7 +28,7 @@ SHOTS = [
     (s30_watch, 0, 5, 'tess'), (s31_eureka, 0, 4, 'tess'), (s30_watch, 5, 8, 'tess'), (s31_eureka, 4, 10, 'tess'),
     (s32_papers, 0, 9, 'tess'),
     (s33_station, 0, 9, 'home'), (s34_family, 0, 10, 'home'), (s35_hands, 0, 6, 'home'), (s35b_hug, 0, 9, 'home'),
-    (s36_depart, 0, 9, 'end'), (s37_edmunds, 0, 14, 'end'),
+    (s36_depart, 0, 9, 'end'), (s37_edmunds, 0, 16, 'end'),
 ]
 SHOTS = [(f, a, (a + (b - a) * 1.2) if (b - a) >= 8 and f is not op else b, lab) for f, a, b, lab in SHOTS]
 # soft fades at the act breaks (index of shot that fades IN)

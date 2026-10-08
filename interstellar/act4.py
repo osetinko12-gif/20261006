@@ -154,27 +154,40 @@ def s35b_hug(t):                      # father holds his old daughter, cheek to 
     im = up(im)
     return glow(im, 196, 150, 150 * clamp((t - 3) / 3), (255, 220, 170), 0.16)
 
-def s36_depart(t):                    # he takes a ship and goes to find her
+def s36_depart(t):                    # he takes a ship from the station by Saturn and heads back into the wormhole
+    from common import saturn
     im, d = canvas((2, 3, 10)); stars(d, 36, 200)
-    R(d, 0, 170, W, H, (90, 100, 110))
-    d.ellipse([-60, 150, 444, 250], fill=(110, 120, 130))
-    k = clamp((t - 1) / 9)
-    ranger(d, lerp(80, 420, k), lerp(150, 30, k), 1.0 - k * 0.5, 1, flame=True, f=int(t * 24))
-    wormhole(d, 340, 40, 18, t)
+    saturn(d, 70, 170, 60)
+    # Cooper Station: a long rotating cylinder
+    R(d, 60, 70, 170, 96, (150, 154, 160)); R(d, 60, 70, 170, 74, (200, 204, 210)); R(d, 60, 92, 170, 96, (110, 114, 120))
+    for k in range(8):
+        x = 62 + (k * 14 + t * 6) % 108; R(d, x, 76, x + 4, 90, (230, 220, 150) if k % 2 else (120, 160, 120))
+    d.ellipse([52, 70, 68, 96], fill=(180, 184, 190)); d.ellipse([164, 70, 178, 96], fill=(130, 134, 140))
+    wx, wy, wr = 320, 70, 26
+    wormhole(d, wx, wy, wr, t)
+    k = clamp((t - 0.8) / 8)
+    e = k ** 1.4
+    s = 0.9 * (1 - e) + 0.15
+    ranger(d, lerp(172, wx - 4, e), lerp(92, wy, e), s, 1, flame=k < 1, f=int(t * 24))
+    if k >= 1:
+        im = glow(im, wx, wy, 60 * clamp((t - 8.8) / 0.6) + 1, (220, 230, 255), 0.8)
     return im
 
-def s37_edmunds(t):                   # Brand on the new world. Sunset.
-    im, d = canvas(); grad(d, 0, 130, (60, 50, 90), (240, 150, 90))
-    R(d, 250, 98, 290, 132, (255, 220, 160)) if False else d.ellipse([250, 96, 300, 146], fill=(255, 210, 140))
-    d.polygon([(0, 128), (90, 118), (180, 126), (300, 116), (384, 124), (384, 216), (0, 216)], fill=(150, 100, 80))
-    grad(d, 140, 216, (170, 112, 86), (120, 80, 64))
-    for k in range(3): R(d, 40 + k * 26, 150, 60 + k * 26, 168, (200, 200, 196))
-    R(d, 120, 150, 122, 172, (120, 90, 70)); R(d, 114, 156, 128, 158, (120, 90, 70))   # a simple grave marker
+def s37_edmunds(t):                   # Brand on the new world. The sun goes down.
+    k = clamp(t / 16)
+    im, d = canvas(); grad(d, 0, 130, mix((60, 50, 90), (16, 14, 40), k), mix((240, 150, 90), (120, 60, 70), k))
+    stars(d, 37, int(80 * clamp((k - 0.5) * 2)), 100)
+    sy = 96 + k * 46
+    d.ellipse([250, sy, 300, sy + 50], fill=mix((255, 210, 140), (255, 140, 90), k))
+    d.polygon([(0, 128), (90, 118), (180, 126), (300, 116), (384, 124), (384, 216), (0, 216)], fill=mix((150, 100, 80), (60, 40, 46), k))
+    grad(d, 140, 216, mix((170, 112, 86), (70, 46, 50), k), mix((120, 80, 64), (40, 28, 34), k))
+    for j in range(3): R(d, 40 + j * 26, 150, 60 + j * 26, 168, mix((200, 200, 196), (90, 86, 96), k))
+    R(d, 120, 150, 122, 172, (120, 90, 70)); R(d, 114, 156, 128, 158, (120, 90, 70))
     person(d, 190, 176, 'brand', 1)
-    R(d, 196, 174, 204, 178, (232, 232, 226))     # helmet set down on the ground
-    if t > 5:
-        k = clamp((t - 5) / 6)
-        x = lerp(380, 300, k); y = lerp(10, 40, k)
+    R(d, 196, 174, 204, 178, (232, 232, 226))
+    if 4 < t < 9:
+        q = clamp((t - 4) / 5)
+        x = lerp(380, 300, q); y = lerp(10, 40, q)
         d.line([x, y, x + 20, y - 6], fill=(255, 255, 255)); d.point((x, y), fill=(255, 255, 220))
     return im
 
