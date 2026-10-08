@@ -118,10 +118,12 @@ def s34_family(t):                    # old Murph in her bed, her family around 
     R(d, 24, 62, 110, 74, (236, 236, 236)); R(d, 24, 74, 110, 78, (200, 200, 206))        # bed
     R(d, 24, 52, 28, 78, (170, 170, 176)); R(d, 106, 58, 110, 78, (170, 170, 176))
     R(d, 26, 78, 28, 92, (150, 150, 156)); R(d, 106, 78, 108, 92, (150, 150, 156))
-    R(d, 28, 58, 44, 64, (250, 250, 250))                                                     # pillow
-    R(d, 32, 55, 40, 61, SKIN); R(d, 30, 54, 42, 57, (236, 236, 236)); R(d, 29, 56, 32, 63, (236, 236, 236))   # her face, white hair
-    d.point((38, 58), fill=(40, 30, 30))
-    R(d, 42, 58, 108, 64, (190, 206, 222)); R(d, 42, 58, 108, 59, (220, 230, 240))          # blanket over her
+    d.rounded_rectangle([26, 40, 44, 66], 3, fill=(250, 250, 250))                          # pillows propped up
+    R(d, 34, 52, 46, 66, (238, 238, 242)); R(d, 34, 52, 37, 66, (214, 214, 220))            # her body sitting up, nightgown
+    R(d, 44, 60, 56, 63, (238, 238, 242)); R(d, 55, 60, 58, 63, SKIN)                       # arm resting on the blanket
+    R(d, 36, 43, 44, 51, SKIN); R(d, 35, 41, 45, 44, (236, 236, 236)); R(d, 34, 42, 37, 52, (236, 236, 236))   # face, white hair
+    d.point((42, 46), fill=(40, 30, 30))
+    R(d, 46, 62, 108, 68, (190, 206, 222)); R(d, 46, 62, 108, 63, (220, 230, 240))          # blanket over her legs
     for k, who in enumerate(['tomA', 'murphA', 'tom', 'murph']):
         person(d, 40 + k * 15, 100, who, 1)
     walk = clamp(t / 6)

@@ -58,9 +58,9 @@ def s22_betrayal(t):                  # Mann turns on Cooper: a brawl on the ice
         bob = abs(math.sin((t - 7) * 9)) * 6
         paste_rot(im, cop, 108, gy - 10, 90); paste_rot(im, man, 110, gy - 30 + bob, -60)
     else:                                         # Mann walks away; air hisses from the cracked visor
-        k = clamp((t - 8.6) / 3)
         paste_rot(im, cop, 108, gy - 10, 90 + math.sin(t * 5) * 4)
-        paste_rot(im, astro_img(-1, 'walk', visor=MV, f=t * 5), 120 - k * 110, gy - 26, 0)
+        mx = 120 - (t - 8.6) * 36
+        if mx > -30: paste_rot(im, astro_img(-1, 'walk', visor=MV, f=t * 5), mx, gy - 26, 0)
         r = random.Random(int(t * 14))
         for n in range(24): d.point((88 + r.randint(-8, 6), gy - 14 + r.randint(-12, 4)), fill=(250, 252, 255))
     out = up(im)
@@ -135,9 +135,40 @@ def s24b_cockpit(t):                  # close-up: Cooper fighting the spin
     R(d, 0, 66, ZW, ZH, (50, 52, 58)); d.polygon([(0, 0), (30, 0), (10, 66), (0, 66)], fill=(50, 52, 58)); d.polygon([(192, 0), (162, 0), (182, 66), (192, 66)], fill=(50, 52, 58))
     warn = int(t * 4) % 2
     for k in range(6): R(d, 20 + k * 28, 72, 30 + k * 28, 76, (230, 60, 50) if (warn + k) % 2 else (70, 70, 76))
-    portrait(d, 96, 108, 'cooperS', 1.6)
-    R(d, 116, 92, 126, 100, (40, 40, 44)); R(d, 112, 90, 118, 96, SKIN)                  # hand on the stick
+    portrait(d, 72, 108, 'brand', 1.5, shock=True)
+    portrait(d, 118, 108, 'cooperS', 1.5)
+    R(d, 134, 94, 142, 100, (40, 40, 44)); R(d, 130, 92, 136, 97, SKIN)                  # hand on the stick
+    tars(d, 150, 100)
     return shake(up(im), 1, int(t * 24))
+
+def s24d_lock(t):                     # outside: the Ranger slides into the spinning hub and locks
+    im = Image.new('RGB', (W, H), (2, 3, 8))
+    spin = -t * 2.6
+    r = random.Random(242)
+    d = ImageDraw.Draw(im)
+    for k in range(160):                          # the whole sky wheels around the joined ships
+        rr = r.uniform(10, 260); a0 = r.uniform(0, 6.28) + spin
+        x, y = 192 + math.cos(a0) * rr, 108 + math.sin(a0) * rr
+        d.line([x, y, 192 + math.cos(a0 + 0.05) * rr, 108 + math.sin(a0 + 0.05) * rr], fill=(200, 200, 230))
+    spr = Image.new('RGBA', (300, 300), (0, 0, 0, 0)); sd = ImageDraw.Draw(spr)
+    sd.ellipse([150 - 70, 150 - 70, 150 + 70, 150 + 70], fill=(150, 150, 146))
+    sd.ellipse([150 - 58, 150 - 58, 150 + 58, 150 + 58], fill=(196, 196, 190))
+    for k in range(8):
+        a = k * math.pi / 4; sd.line([150 + math.cos(a) * 58, 150 + math.sin(a) * 58, 150 + math.cos(a) * 70, 150 + math.sin(a) * 70], fill=(110, 110, 106), width=3)
+    sd.ellipse([150 - 18, 150 - 18, 150 + 18, 150 + 18], fill=(40, 40, 46))     # docking port
+    ins = clamp(t / 2.4)
+    nose = 150 + 12 - (1 - ins) * 60                                             # Ranger seen from behind, sliding in
+    sd.ellipse([150 - 26, 150 - 14 - (1 - ins) * 30, 150 + 26, 150 + 14 - (1 - ins) * 30], fill=(205, 205, 200))
+    sd.ellipse([150 - 10, 150 - 8 - (1 - ins) * 30, 150 + 10, 150 + 8 - (1 - ins) * 30], fill=(120, 120, 120))
+    if t > 2.5:                                   # clamps close
+        for k in range(4):
+            a = k * math.pi / 2 + math.pi / 4
+            sd.polygon([(150 + math.cos(a) * 30, 150 + math.sin(a) * 30), (150 + math.cos(a + 0.3) * 20, 150 + math.sin(a + 0.3) * 20),
+                        (150 + math.cos(a - 0.3) * 20, 150 + math.sin(a - 0.3) * 20)], fill=(240, 200, 80))
+    rot = spr.rotate(math.degrees(spin) if t > 2.5 else math.degrees(spin) * clamp(t / 2.5), resample=Image.NEAREST)
+    im.paste(rot, (192 - 150, 108 - 150), rot)
+    if 2.5 < t < 2.8: im = glow(im, 192, 108, 80, (255, 240, 200), 0.8)
+    return shake(im, 3 if 2.5 < t < 2.9 else 0, int(t * 24))
 
 def s24c_cheer(t):                    # docked! relief and laughter in the cockpit
     im, d = zcanvas((14, 14, 22))
@@ -171,20 +202,39 @@ def s26_detach(t):                    # Cooper lets go so she can make it
     ranger(d, lerp(286, 200, k), lerp(64, 110, k), 0.5, -1)
     return im
 
-def s27_fall(t):                      # into the dark
-    im, d = canvas((0, 0, 0))
+def s27_fall(t):                      # into the dark: the Ranger breaks up, sparks hit Cooper, he blacks out
+    im, d = zcanvas((0, 0, 0))
     r = random.Random(27)
-    for k in range(220):                         # light streaks rushing past
-        a = r.uniform(0, 6.28); q = (r.random() + t * 0.25) % 1
-        rr = q * q * 260
-        x = 192 + math.cos(a) * rr; y = 108 + math.sin(a) * rr
-        d.line([x, y, 192 + math.cos(a) * rr * 0.86, 108 + math.sin(a) * rr * 0.86], fill=mix((60, 40, 20), (255, 230, 180), q))
-    R(d, 0, 150, W, H, (30, 30, 34)); R(d, 0, 150, W, 152, (70, 70, 76))
-    R(d, 60, 160, 324, 200, (44, 44, 50))
-    for k in range(10): R(d, 80 + k * 24, 170, 90 + k * 24, 176, (200, 60, 40) if (k + int(t * 6)) % 3 == 0 else (60, 140, 90))
-    if t > 8:
-        boom(d, 192, 108, clamp((t - 8) / 2), 3)
-    return im
+    for k in range(110):                          # light streaks rushing past the window
+        a = r.uniform(0, 6.28); q = (r.random() + t * 0.3) % 1
+        rr = q * q * 130
+        x = 96 + math.cos(a) * rr; y = 34 + math.sin(a) * rr * 0.6
+        d.line([x, y, 96 + math.cos(a) * rr * 0.86, 34 + math.sin(a) * rr * 0.86 * 0.6], fill=mix((60, 40, 20), (255, 230, 180), q))
+    R(d, 0, 62, ZW, ZH, (44, 44, 50)); d.polygon([(0, 0), (26, 0), (10, 62), (0, 62)], fill=(44, 44, 50)); d.polygon([(192, 0), (166, 0), (182, 62), (192, 62)], fill=(44, 44, 50))
+    if t > 4:                                     # the window cracks
+        k = clamp((t - 4) / 3)
+        for n in range(5):
+            a = n * 1.3 + 0.4; d.line([120, 20, 120 + math.cos(a) * 40 * k, 20 + math.sin(a) * 30 * k], fill=(230, 240, 255))
+    alarm = int(t * 6) % 2 and t > 2
+    for k in range(6): R(d, 20 + k * 28, 68, 30 + k * 28, 72, (230, 60, 50) if alarm else (70, 70, 76))
+    out_cold = t > 8.6
+    sink = clamp((t - 8.6) / 1.5) * 5
+    portrait(d, 96, 108 + sink, 'cooperS', 1.6, shock=2.5 < t < 8.6, closed=out_cold)
+    if 2.5 < t < 9:                               # sparks spraying from the panels into the cabin, hitting him
+        rr = random.Random(int(t * 24))
+        for n in range(int(10 + 30 * clamp((t - 2.5) / 5))):
+            sx = rr.choice([10, 182]); sy = rr.randint(40, 70)
+            ex = 96 + rr.randint(-30, 30); ey = 70 + rr.randint(-20, 20)
+            q = rr.random()
+            d.line([sx + (ex - sx) * q, sy + (ey - sy) * q, sx + (ex - sx) * (q + 0.08), sy + (ey - sy) * (q + 0.08)],
+                   fill=rr.choice([(255, 220, 120), (255, 255, 220), (255, 150, 60)]))
+        if rr.random() < 0.3:                    # debris chunks flying in
+            x = rr.randint(40, 150); y = rr.randint(10, 60); R(d, x, y, x + 3, y + 2, (120, 120, 126))
+    out = up(im)
+    if 8.2 < t < 8.7: out = glow(out, 192, 120, 300, (255, 240, 210), 1.0)
+    out = shake(out, int(1 + 4 * clamp((t - 3) / 5)) if t < 8.8 else 0, int(t * 24))
+    if t > 9: out = Image.blend(out, Image.new('RGB', (W, H)), clamp((t - 9) / 2))
+    return out
 
 SCENES = [
     ('氷の惑星', s20_ice, 6), ('英雄マン博士の目覚め', s21_mann, 4), ('裏切り', s22_betrayal, 6),
