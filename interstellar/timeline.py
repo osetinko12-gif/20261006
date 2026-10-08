@@ -15,7 +15,7 @@ SHOTS = [
     (s08_leave, 0, 5, 'launch'), (s09_launch, 0, 4, 'launch'), (s08_leave, 5, 11, 'launch'), (s09_launch, 4, 12, 'launch'),
     # ACT 2 — space, the water planet, lost years
     (s10_orbit, 0, 10, 'space'), (s11_saturn, 0, 9, 'space'), (s12_wormhole, 0, 10, 'space'), (s13_inside, 0, 8, 'space'),
-    (s14_miller, 0, 10, 'miller'), (s15_wave, 0, 5, 'miller'), (s15b_lookup, 0, 3, 'miller'), (s15_wave, 5, 9, 'miller'),
+    (s14_miller, 0, 10, 'miller'), (s15a_wavewide, 0, 7, 'miller'), (s15_wave, 0, 5, 'miller'), (s15b_lookup, 0, 3, 'miller'), (s15c_tarsrun, 0, 6.5, 'miller'), (s15_wave, 5, 8, 'miller'),
     (s16_escape, 0, 8, 'miller'),
     (s17_23years, 0, 11, 'loss'), (s18_messages, 0, 13, 'loss'), (s19_murph, 0, 11, 'loss'),
     # ACT 3 — Mann, the spin, Gargantua

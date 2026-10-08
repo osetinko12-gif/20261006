@@ -82,6 +82,49 @@ def s15_wave(t):                      # those aren't mountains...
     tars(d, 150 + t * 4, 200, f=t * 10, walk=True); astro(d, 160 + t * 4, 178, -1, s=0.8)
     return im
 
+def s15a_wavewide(t):                 # wide: the "mountain" on the horizon rises and moves
+    im, d = canvas(); grad(d, 0, 216, (150, 160, 170), (196, 200, 200))
+    k = clamp(t / 7) ** 1.3
+    top = 104 - k * 90
+    for x in range(W):                            # "mountains" on the horizon that rise into one wall of water
+        ridge = 22 * abs(math.sin(x * 0.018 + 0.6)) * (1 - k)
+        h = top + ridge + math.sin(x * 0.07 + t * 2) * 1.5
+        if h < 140:
+            for y in range(int(h), 140): d.point((x, y), fill=mix((140, 166, 178), (70, 100, 120), (y - h) / max(1, 140 - h)))
+            d.point((x, int(h)), fill=(230, 240, 240)); d.point((x, int(h) + 1), fill=(210, 226, 230))
+    ocean(d, 140, t)
+    ranger(d, 64, 168, 0.7, -1)
+    for k2, x in enumerate((110, 124)): astro(d, x, 180, -1, 'walk', f=t * 4 + k2, s=0.6)
+    tars(d, 92, 184, f=t * 4, walk=True)
+    return shake(im, 1 if t > 4 else 0, int(t * 24))
+
+def s15c_tarsrun(t):                  # TARS wheels through the water carrying Brand back to the ship
+    im, d = zcanvas()
+    for y in range(0, 46): d.line([0, y, ZW, y], fill=mix((120, 146, 160), (70, 100, 120), y / 46))   # the wave wall behind
+    for x in range(0, ZW, 2): R(d, x, 3 + math.sin(x * 0.2 + t * 4), x + 1, 4 + math.sin(x * 0.2 + t * 4), (230, 240, 240))
+    grad(d, 46, ZH, (150, 180, 190), (100, 136, 154), 0, ZW)
+    r0 = random.Random(1)
+    for n in range(50):
+        y = 46 + r0.randrange(62); x = (r0.randrange(ZW) + t * 30) % ZW; d.line([x, y, x + 2, y], fill=(205, 222, 228))
+    ranger(d, 186, 74, 0.8, -1)
+    k = clamp(t / 6)
+    cx = lerp(10, 130, k); gy = 92
+    spin = t * 8                                  # TARS on the move, slabs whirling like a wheel
+    spr = Image.new('RGBA', (34, 34), (0, 0, 0, 0)); sd = ImageDraw.Draw(spr)
+    for n in range(4):
+        a = spin + n * math.pi / 2
+        x2, y2 = 17 + math.cos(a) * 13, 17 + math.sin(a) * 13
+        sd.line([17, 17, x2, y2], fill=(170, 172, 176) if n % 2 else (196, 198, 202), width=5)
+    R(sd, 13, 13, 21, 21, (30, 34, 38)); R(sd, 14, 15, 18, 17, (120, 220, 255))
+    im.paste(spr, (int(cx - 17), gy - 30), spr)
+    paste_rot(im, astro_img(1, 'stand', s=0.9, visor=(80, 110, 140)), cx + 2, gy - 27, 75)   # Brand, held above him
+    d = ImageDraw.Draw(im)
+    astro(d, cx - 30, gy + 8, 1, 'run', f=t * 10, s=1.0)                           # Cooper splashing after them
+    r = random.Random(int(t * 12))
+    for n in range(36):
+        x = cx - 20 - r.randint(0, 40); y = gy + r.randint(-14, 8); R(d, x, y, x + 1, y + 1, (232, 242, 244))
+    return up(im)
+
 def helmet_face(d, cx, by, who, s=2, tint=(40, 50, 64), refl=None, **kw):
     """Face seen through a round space-helmet visor."""
     im = d._image

@@ -106,7 +106,7 @@ a, b = SEC['miller']                                                   # MILLER 
 t = a
 while t < b: tick(t, 0.09); t += 1.25
 pads(a, b, 60, ['A2 E3 C4', 'Bb2 F3 D4', 'C3 G3 E4', 'D3 A3 F4'], 0.04)
-W0 = at('s15_wave', 0)
+W0 = at('s15a_wavewide', 3.0)
 arp(W0, b, 132, ['A2 A3', 'Bb2 Bb3', 'C3 C4', 'D3 D4'], div=4, vol=0.05, kind='saw', pattern=(0, 1))
 noise_bed(W0, b, 0.10, 400, swell=0.9)                                  # the wave's roar
 E = at('s16_escape', 2.0)
