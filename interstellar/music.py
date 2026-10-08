@@ -135,7 +135,7 @@ noise_bed(M0, M0 + 7.5, 0.03, 150)
 X = at('s23_explosion', 3.5)
 tr.boom(X, 0.9, 3.0); timpani(X, 'D1', 0.9)
 C0 = at('s24c_cheer', 0)
-L0 = at('s24d_lock', 2.5); tr.add(L0, osc('noise', 9, 0.15, 0.35, adsr=(0.001, 0.05, 0.3, 0.05))); timpani(L0, 'D2', 0.6)   # clunk of the latch
+L0 = at('s24d_lock', 7.5); tr.add(L0, osc('noise', 9, 0.15, 0.35, adsr=(0.001, 0.05, 0.3, 0.05))); timpani(L0, 'D2', 0.6)   # clunk of the latch
 arp(X + 1, L0, 120, ['D3 A3 D4 F4', 'Bb2 F3 Bb3 D4', 'F3 C4 F4 A4', 'C3 G3 C4 E4'], div=4, vol=0.06, pattern=(0, 1, 2, 3, 2, 1))
 for k, ch in enumerate(['D2 A2 D3 F3 A3', 'Bb1 F2 Bb2 D3 F3', 'F2 C3 F3 A3 C4', 'C2 G2 C3 E3 G3'] * 4):
     tt = X + 1 + k * 2.0
@@ -149,7 +149,9 @@ a, b = SEC['garg']                                                     # GARGANT
 organ(a, b - a, 'D1 A1 D2', 0.07, att=2.0, rel=2.0)
 pads(a + 2, b, 40, ['D3 A3 E4 F4', 'Bb2 F3 D4 E4', 'G2 D3 Bb3 F4', 'A2 E3 C#4 E4'], 0.04)
 noise_bed(at('s27_fall', 0), b, 0.08, 60, swell=0.95)                  # falling: rising hiss
-tr.boom(at('s27_fall', 8.2 * 1.2 / 1.2), 0.9, 3.0)
+tr.boom(at('s27_fall', 8.6), 0.9, 3.0); tr.boom(at('s27c_rift', 6.6), 0.7, 3.0)
+for n in range(30): tr.add(at('s24d_lock', 3.0) + n * 0.05, osc('noise', n + 99, 0.05, 0.08, adsr=(0.001, 0.02, 0.3, 0.01)))   # scraping
+noise_bed(at('s27_fall', 5.0), at('s27_fall', 8.9), 0.05, 20)   # fire
 for n in range(40): tr.add(at('s27_fall', 3.0) + n * 0.13, osc('noise', n, 0.04, 0.10, adsr=(0.001, 0.02, 0.2, 0.01)))   # sparks crackling
 
 a, b = SEC['tess']                                                     # TESSERACT — ticking to revelation

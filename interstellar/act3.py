@@ -156,19 +156,31 @@ def s24d_lock(t):                     # outside: the Ranger slides into the spin
     for k in range(8):
         a = k * math.pi / 4; sd.line([150 + math.cos(a) * 58, 150 + math.sin(a) * 58, 150 + math.cos(a) * 70, 150 + math.sin(a) * 70], fill=(110, 110, 106), width=3)
     sd.ellipse([150 - 18, 150 - 18, 150 + 18, 150 + 18], fill=(40, 40, 46))     # docking port
-    ins = clamp(t / 2.4)
-    nose = 150 + 12 - (1 - ins) * 60                                             # Ranger seen from behind, sliding in
-    sd.ellipse([150 - 26, 150 - 14 - (1 - ins) * 30, 150 + 26, 150 + 14 - (1 - ins) * 30], fill=(205, 205, 200))
-    sd.ellipse([150 - 10, 150 - 8 - (1 - ins) * 30, 150 + 10, 150 + 8 - (1 - ins) * 30], fill=(120, 120, 120))
-    if t > 2.5:                                   # clamps close
+    # approach -> misaligned wobble -> back off -> re-align -> slow final push -> lock at 7.5s
+    if t < 3.0: ins = 0.85 * (t / 3.0)
+    elif t < 4.6: ins = 0.85 + math.sin((t - 3.0) * 18) * 0.03
+    elif t < 5.4: ins = lerp(0.85, 0.55, (t - 4.6) / 0.8)
+    elif t < 7.5: ins = lerp(0.55, 1.0, ((t - 5.4) / 2.1) ** 1.6)
+    else: ins = 1.0
+    wob = (math.sin(t * 23) * 6 if 3.0 < t < 4.6 else 0) * (1 - ins * 0.5)
+    sd = ImageDraw.Draw(spr)
+    oy = (1 - ins) * 30
+    sd.ellipse([150 - 26 + wob, 150 - 14 - oy, 150 + 26 + wob, 150 + 14 - oy], fill=(205, 205, 200))
+    sd.ellipse([150 - 10 + wob, 150 - 8 - oy, 150 + 10 + wob, 150 + 8 - oy], fill=(120, 120, 120))
+    if 3.0 < t < 4.6:                             # metal scraping metal
+        rr = random.Random(int(t * 20))
+        for n in range(10):
+            a = rr.uniform(0, 6.28); x0, y0 = 150 + math.cos(a) * 20 + wob, 150 + math.sin(a) * 16 - oy
+            sd.line([x0, y0, x0 + math.cos(a) * rr.randint(6, 16), y0 + math.sin(a) * rr.randint(6, 16)], fill=rr.choice([(255, 220, 120), (255, 255, 230)]))
+    if t > 7.5:                                   # clamps close
         for k in range(4):
             a = k * math.pi / 2 + math.pi / 4
             sd.polygon([(150 + math.cos(a) * 30, 150 + math.sin(a) * 30), (150 + math.cos(a + 0.3) * 20, 150 + math.sin(a + 0.3) * 20),
                         (150 + math.cos(a - 0.3) * 20, 150 + math.sin(a - 0.3) * 20)], fill=(240, 200, 80))
-    rot = spr.rotate(math.degrees(spin) if t > 2.5 else math.degrees(spin) * clamp(t / 2.5), resample=Image.NEAREST)
+    rot = spr.rotate(math.degrees(spin) * (1.0 if t > 7.5 else 0.94), resample=Image.NEAREST)
     im.paste(rot, (192 - 150, 108 - 150), rot)
-    if 2.5 < t < 2.8: im = glow(im, 192, 108, 80, (255, 240, 200), 0.8)
-    return shake(im, 3 if 2.5 < t < 2.9 else 0, int(t * 24))
+    if 7.5 < t < 7.8: im = glow(im, 192, 108, 80, (255, 240, 200), 0.8)
+    return shake(im, 3 if 7.5 < t < 7.9 or 3.0 < t < 4.6 else 0, int(t * 24))
 
 def s24c_cheer(t):                    # docked! relief and laughter in the cockpit
     im, d = zcanvas((14, 14, 22))
@@ -202,39 +214,111 @@ def s26_detach(t):                    # Cooper lets go so she can make it
     ranger(d, lerp(286, 200, k), lerp(64, 110, k), 0.5, -1)
     return im
 
-def s27_fall(t):                      # into the dark: the Ranger breaks up, sparks hit Cooper, he blacks out
+def streaks(d, t, cx, cy, sc=1.0, n=120, seed=27):
+    """Three kinds of light rushing past: white lines, bent orange arcs, blue motes."""
+    r = random.Random(seed)
+    for k in range(n):
+        kind = k % 3; a = r.uniform(0, 6.28); q = (r.random() + t * (0.25 + 0.15 * kind)) % 1
+        rr = q * q * 140 * sc
+        if kind == 0:
+            d.line([cx + math.cos(a) * rr, cy + math.sin(a) * rr * 0.6, cx + math.cos(a) * rr * 0.82, cy + math.sin(a) * rr * 0.82 * 0.6], fill=mix((70, 70, 90), (255, 255, 255), q))
+        elif kind == 1:
+            pts = [(cx + math.cos(a + j * 0.05) * rr * (1 - j * 0.05), cy + math.sin(a + j * 0.05) * rr * 0.6 * (1 - j * 0.05)) for j in range(5)]
+            d.line(pts, fill=mix((80, 40, 10), (255, 170, 70), q))
+        else:
+            x, y = cx + math.cos(a) * rr, cy + math.sin(a) * rr * 0.6
+            d.rectangle([x, y, x + (1 if q > 0.6 else 0), y], fill=mix((30, 50, 90), (150, 210, 255), q))
+
+def sparks(d, t, seed, x0, y0, tx, ty, n):
+    """Mixed sparks: yellow lines, white star bursts, red embers, blue electric arcs."""
+    rr = random.Random(seed)
+    for k in range(n):
+        kind = rr.randint(0, 3); q = rr.random()
+        sx, sy = x0 + rr.randint(-6, 6), y0 + rr.randint(-10, 10)
+        ex, ey = tx + rr.randint(-30, 30), ty + rr.randint(-20, 20)
+        x, y = sx + (ex - sx) * q, sy + (ey - sy) * q
+        if kind == 0: d.line([x, y, x + (ex - sx) * 0.08, y + (ey - sy) * 0.08], fill=(255, 220, 120))
+        elif kind == 1:
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)): d.point((x + dx, y + dy), fill=(255, 255, 230))
+            d.point((x, y), fill=(255, 255, 255))
+        elif kind == 2: d.point((x, y - q * 6), fill=rr.choice([(230, 70, 40), (255, 120, 50)]))
+        else:
+            pts = [(x, y)]
+            for j in range(4): pts.append((pts[-1][0] + rr.randint(-4, 4), pts[-1][1] + rr.randint(-4, 4)))
+            d.line(pts, fill=rr.choice([(120, 200, 255), (200, 240, 255)]))
+
+def s27_fall(t):                      # into the dark: the Ranger breaks up and burns around him
     im, d = zcanvas((0, 0, 0))
-    r = random.Random(27)
-    for k in range(110):                          # light streaks rushing past the window
-        a = r.uniform(0, 6.28); q = (r.random() + t * 0.3) % 1
-        rr = q * q * 130
-        x = 96 + math.cos(a) * rr; y = 34 + math.sin(a) * rr * 0.6
-        d.line([x, y, 96 + math.cos(a) * rr * 0.86, 34 + math.sin(a) * rr * 0.86 * 0.6], fill=mix((60, 40, 20), (255, 230, 180), q))
+    streaks(d, t, 96, 34)
     R(d, 0, 62, ZW, ZH, (44, 44, 50)); d.polygon([(0, 0), (26, 0), (10, 62), (0, 62)], fill=(44, 44, 50)); d.polygon([(192, 0), (166, 0), (182, 62), (192, 62)], fill=(44, 44, 50))
     if t > 4:                                     # the window cracks
         k = clamp((t - 4) / 3)
-        for n in range(5):
-            a = n * 1.3 + 0.4; d.line([120, 20, 120 + math.cos(a) * 40 * k, 20 + math.sin(a) * 30 * k], fill=(230, 240, 255))
+        for n in range(6):
+            a = n * 1.1 + 0.4; d.line([120, 20, 120 + math.cos(a) * 44 * k, 20 + math.sin(a) * 32 * k], fill=(230, 240, 255))
     alarm = int(t * 6) % 2 and t > 2
     for k in range(6): R(d, 20 + k * 28, 68, 30 + k * 28, 72, (230, 60, 50) if alarm else (70, 70, 76))
-    out_cold = t > 8.6
-    sink = clamp((t - 8.6) / 1.5) * 5
-    portrait(d, 96, 108 + sink, 'cooperS', 1.6, shock=2.5 < t < 8.6, closed=out_cold)
-    if 2.5 < t < 9:                               # sparks spraying from the panels into the cabin, hitting him
-        rr = random.Random(int(t * 24))
-        for n in range(int(10 + 30 * clamp((t - 2.5) / 5))):
-            sx = rr.choice([10, 182]); sy = rr.randint(40, 70)
-            ex = 96 + rr.randint(-30, 30); ey = 70 + rr.randint(-20, 20)
-            q = rr.random()
-            d.line([sx + (ex - sx) * q, sy + (ey - sy) * q, sx + (ex - sx) * (q + 0.08), sy + (ey - sy) * (q + 0.08)],
-                   fill=rr.choice([(255, 220, 120), (255, 255, 220), (255, 150, 60)]))
-        if rr.random() < 0.3:                    # debris chunks flying in
-            x = rr.randint(40, 150); y = rr.randint(10, 60); R(d, x, y, x + 3, y + 2, (120, 120, 126))
+    if t > 5:                                     # the cabin catches fire
+        fr = random.Random(int(t * 12)); h = clamp((t - 5) / 3)
+        for x in range(0, ZW, 5):
+            if 40 < x < 150: continue
+            fh = fr.randint(4, 14) * h
+            d.polygon([(x, 66), (x + 3, 66 - fh), (x + 6, 66)], fill=fr.choice([(255, 200, 60), (255, 130, 40), (230, 70, 30)]))
+        for n in range(int(20 * h)): d.point((fr.randint(0, ZW), fr.randint(30, 66) - (t * 10) % 20), fill=(90, 80, 80))
+    portrait(d, 96, 108, 'cooperS', 1.6, shock=2.5 < t)
+    if 2.5 < t:
+        sparks(d, t, int(t * 24), 10, 55, 96, 75, int(10 + 30 * clamp((t - 2.5) / 5)))
+        sparks(d, t, int(t * 24) + 7, 182, 55, 96, 75, int(10 + 30 * clamp((t - 2.5) / 5)))
+    if t > 7.6: R(d, 128, 90, 136, 96, SKIN); R(d, 132, 84, 140, 90, (230, 200, 60))      # he pulls the eject handle
     out = up(im)
-    if 8.2 < t < 8.7: out = glow(out, 192, 120, 300, (255, 240, 210), 1.0)
-    out = shake(out, int(1 + 4 * clamp((t - 3) / 5)) if t < 8.8 else 0, int(t * 24))
-    if t > 9: out = Image.blend(out, Image.new('RGB', (W, H)), clamp((t - 9) / 2))
-    return out
+    if t > 5: out = glow(out, 192, 200, 220, (255, 120, 40), 0.25 * clamp((t - 5) / 2))
+    if t > 8.6: out = glow(out, 192, 108, 400, (255, 245, 220), 1.0)
+    return shake(out, int(1 + 4 * clamp((t - 3) / 5)), int(t * 24))
+
+def s27b_eject(t):                    # thrown out into Gargantua as the Ranger burns apart
+    im, d = canvas((6, 3, 2))
+    for y in range(H): d.line([0, y, W, y], fill=mix((40, 18, 6), (6, 3, 2), abs(y - 108) / 108))
+    streaks(d, t * 0.6, 192, 108, sc=2.0, n=160, seed=41)
+    k = clamp(t / 7)
+    sx, sy = 260 + k * 60, 70 - k * 40                                                  # the burning wreck tumbling away
+    rnd = random.Random(int(t * 10))
+    for n in range(6):
+        a = n * 1.05 + t * 0.4; px, py = sx + math.cos(a) * 18 * (1 + k), sy + math.sin(a) * 12 * (1 + k)
+        R(d, px, py, px + 6, py + 3, (170, 170, 166))
+        for m in range(4): d.point((px - rnd.randint(1, 8), py + rnd.randint(-2, 3)), fill=rnd.choice([(255, 180, 60), (255, 110, 40)]))
+    ranger(d, sx - 20, sy + 6, 0.7, 1)
+    for m in range(30):
+        d.point((sx - 20 + rnd.randint(0, 40), sy + rnd.randint(-8, 8)), fill=rnd.choice([(255, 200, 80), (255, 120, 40), (240, 70, 30)]))
+    e = clamp(t / 1.6)                                                                  # he ejects himself: seat rocket out of the wreck
+    cx = lerp(sx - 10, 150 - k * 30, e ** 0.6); cy = lerp(sy + 4, 120, e ** 0.6) + math.sin(t) * 6 * e
+    if t < 2.2:
+        d = ImageDraw.Draw(im)
+        for n in range(26):
+            q = n / 26; fx, fy = lerp(sx - 10, cx, q), lerp(sy + 4, cy, q)
+            d.rectangle([fx, fy, fx + 2, fy + 2], fill=mix((255, 120, 40), (255, 240, 200), q))
+        R(d, cx - 8, cy + 10, cx + 8, cy + 16, (90, 90, 96))                                # the seat
+    spr = astro_img(1, 'stand', s=1.6, visor=(80, 90, 110))
+    paste_rot(im, spr, cx, cy, 0 if t < 1.6 else (t - 1.6) * 50)                        # Cooper, then tumbling free
+    return fade(im, t, 0, None, 0.3)
+
+def s27c_rift(t):                     # a tear in space opens; he falls into it
+    im, d = canvas((2, 2, 4))
+    streaks(d, t * 0.4, 192, 108, sc=2.2, n=100, seed=43)
+    k = clamp(t / 5)
+    w = 2 + k * 26
+    for y in range(14, 202):                                                            # a jagged tear of light, widest in the middle
+        prof = math.sin(math.pi * (y - 14) / 188)
+        hw = w * (0.15 + 0.85 * prof) + math.sin(y * 0.9 + t * 4) * 2 + math.sin(y * 0.23) * 3
+        if hw < 1: continue
+        for x in range(-int(hw), int(hw) + 1):
+            q = abs(x) / hw
+            d.point((192 + x, y), fill=mix((255, 248, 225), (150, 90, 30), q ** 1.5))
+    im = glow(im, 192, 108, 60 + w * 3, (255, 190, 110), 0.45)
+    d = ImageDraw.Draw(im)
+    pull = clamp((t - 3) / 4)
+    spr = astro_img(1, 'stand', s=1.4 * (1 - pull * 0.8) + 0.01, visor=(80, 90, 110))
+    paste_rot(im, spr, lerp(110, 192, pull), lerp(130, 108, pull), t * 40)
+    if t > 6.6: im = glow(im, 192, 108, 400 * clamp((t - 6.6) / 0.8), (255, 235, 190), 1.0)
+    return im
 
 SCENES = [
     ('氷の惑星', s20_ice, 6), ('英雄マン博士の目覚め', s21_mann, 4), ('裏切り', s22_betrayal, 6),

@@ -21,8 +21,8 @@ SHOTS = [
     # ACT 3 — Mann, the spin, Gargantua
     (s20_ice, 0, 9, 'mann'), (s21_mann, 0, 9, 'mann'), (s22_betrayal, 0, 11.5, 'mann'), (s22b_trap, 0, 7, 'mann'), (s22c_mannflies, 0, 7.5, 'docking'),
     (s23_explosion, 2.5, 7, 'docking'), (s24_docking, 0, 4, 'docking'), (s24b_cockpit, 0, 3, 'docking'),
-    (s24_docking, 4, 9, 'docking'), (s24b_cockpit, 3, 5, 'docking'), (s24d_lock, 0, 5, 'docking'), (s24c_cheer, 0, 6, 'docking'),
-    (s25_gargantua, 0, 10, 'garg'), (s26_detach, 0, 11, 'garg'), (s27_fall, 0, 10.5, 'garg'),
+    (s24_docking, 4, 9, 'docking'), (s24b_cockpit, 3, 5, 'docking'), (s24d_lock, 0, 9, 'docking'), (s24c_cheer, 0, 6, 'docking'),
+    (s25_gargantua, 0, 10, 'garg'), (s26_detach, 0, 11, 'garg'), (s27_fall, 0, 9.0, 'garg'), (s27b_eject, 0, 7, 'garg'), (s27c_rift, 0, 7.5, 'garg'),
     # ACT 4 — the tesseract and home
     (s28_tesseract, 0, 10, 'tess'), (s29_behind, 0, 10, 'tess'),
     (s30_watch, 0, 5, 'tess'), (s31_eureka, 0, 4, 'tess'), (s30_watch, 5, 8, 'tess'), (s31_eureka, 4, 10, 'tess'),
