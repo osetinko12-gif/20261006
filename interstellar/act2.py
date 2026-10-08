@@ -58,12 +58,12 @@ def s14_miller(t):                    # the water planet: knee-deep sea to the h
     for k in range(5):
         x = 30 + k * 80; d.polygon([(x - 30, 110), (x, 70 + (k % 2) * 10), (x + 30, 110)], fill=(150, 160, 166))
     ocean(d, 110, t)
-    ranger(d, 230, 140, 1.4, -1)
-    for k in range(2): R(d, 210 + k * 60, 140, 214 + k * 60, 146, (180, 180, 176))
-    astro(d, 140 + t * 2, 172, 1, 'walk', f=t * 4); astro(d, 110 + t * 2, 178, 1, 'walk', f=t * 4 + 2)
-    tars(d, 70 + t * 2, 182, f=t * 4, walk=True)
-    for x in (140, 110, 80):                     # splashes at the shins
-        d.line([x + t * 2 - 6, 170 + (x == 110) * 6, x + t * 2 + 6, 170 + (x == 110) * 6], fill=(230, 240, 240))
+    ranger(d, 70, 132, 0.9, -1)                   # the ship, left behind at a distance
+    ox = 170 + t * 4
+    astro(d, ox + 30, 172, 1, 'walk', f=t * 4); astro(d, ox, 178, 1, 'walk', f=t * 4 + 2)
+    tars(d, ox - 40, 182, f=t * 4, walk=True)
+    for x, y in ((ox + 30, 170), (ox, 176), (ox - 30, 180)):   # splashes at the shins
+        d.line([x - 6, y, x + 6, y], fill=(230, 240, 240))
     return im
 
 def s15_wave(t):                      # those aren't mountains...
@@ -77,9 +77,9 @@ def s15_wave(t):                      # those aren't mountains...
     for x in range(0, W, 3):                     # foam crest
         R(d, x, top + math.sin(x * 0.1 + t * 3) * 2, x + 2, top + 2 + math.sin(x * 0.1 + t * 3) * 2, (230, 240, 240))
     ocean(d, 160, t)
-    ranger(d, 250, 170, 1.2, -1)
-    astro(d, 190 + t * 3, 196, 1, 'run', f=t * 8)
-    tars(d, 150 + t * 4, 200, f=t * 10, walk=True); astro(d, 160 + t * 4, 178, -1, s=0.8)
+    run = t * 42
+    tars(d, 250 - run, 200, f=t * 12, walk=True); astro(d, 260 - run, 178, -1, s=0.8)
+    astro(d, 300 - run, 196, -1, 'run', f=t * 10)
     return im
 
 def s15a_wavewide(t):                 # wide: the "mountain" on the horizon rises and moves
@@ -93,9 +93,10 @@ def s15a_wavewide(t):                 # wide: the "mountain" on the horizon rise
             for y in range(int(h), 140): d.point((x, y), fill=mix((140, 166, 178), (70, 100, 120), (y - h) / max(1, 140 - h)))
             d.point((x, int(h)), fill=(230, 240, 240)); d.point((x, int(h) + 1), fill=(210, 226, 230))
     ocean(d, 140, t)
-    ranger(d, 64, 168, 0.7, -1)
-    for k2, x in enumerate((110, 124)): astro(d, x, 180, -1, 'walk', f=t * 4 + k2, s=0.6)
-    tars(d, 92, 184, f=t * 4, walk=True)
+    ranger(d, 40, 168, 0.6, -1)
+    run = max(0.0, t - 4.0) * 22
+    for k2, x in enumerate((300, 314)): astro(d, x - run, 180, -1, 'run' if run else 'stand', f=t * 9 + k2, s=0.6)
+    tars(d, 280 - run, 184, f=t * 9, walk=bool(run))
     return shake(im, 1 if t > 4 else 0, int(t * 24))
 
 def s15c_tarsrun(t):                  # TARS wheels through the water carrying Brand back to the ship
@@ -106,10 +107,11 @@ def s15c_tarsrun(t):                  # TARS wheels through the water carrying B
     r0 = random.Random(1)
     for n in range(50):
         y = 46 + r0.randrange(62); x = (r0.randrange(ZW) + t * 30) % ZW; d.line([x, y, x + 2, y], fill=(205, 222, 228))
-    ranger(d, 186, 74, 0.8, -1)
+    ranger(d, 52, 74, 0.8, -1)
+    astro(d, 60, 76, 1, 'reach', s=0.8)                                            # Romilly at the hatch
     k = clamp(t / 6)
-    cx = lerp(10, 130, k); gy = 92
-    spin = t * 8                                  # TARS on the move, slabs whirling like a wheel
+    cx = lerp(186, 74, k); gy = 92
+    spin = -t * 8                                 # TARS on the move, slabs whirling like a wheel
     spr = Image.new('RGBA', (34, 34), (0, 0, 0, 0)); sd = ImageDraw.Draw(spr)
     for n in range(4):
         a = spin + n * math.pi / 2
@@ -117,12 +119,12 @@ def s15c_tarsrun(t):                  # TARS wheels through the water carrying B
         sd.line([17, 17, x2, y2], fill=(170, 172, 176) if n % 2 else (196, 198, 202), width=5)
     R(sd, 13, 13, 21, 21, (30, 34, 38)); R(sd, 14, 15, 18, 17, (120, 220, 255))
     im.paste(spr, (int(cx - 17), gy - 30), spr)
-    paste_rot(im, astro_img(1, 'stand', s=0.9, visor=(80, 110, 140)), cx + 2, gy - 27, 75)   # Brand, held above him
+    paste_rot(im, astro_img(-1, 'stand', s=0.9, visor=(80, 110, 140)), cx - 2, gy - 27, -75)   # Brand, held above him
     d = ImageDraw.Draw(im)
-    astro(d, cx - 30, gy + 8, 1, 'run', f=t * 10, s=1.0)                           # Cooper splashing after them
+    astro(d, cx + 30, gy + 8, -1, 'run', f=t * 10, s=1.0)                          # Cooper splashing after them
     r = random.Random(int(t * 12))
     for n in range(36):
-        x = cx - 20 - r.randint(0, 40); y = gy + r.randint(-14, 8); R(d, x, y, x + 1, y + 1, (232, 242, 244))
+        x = cx + 20 + r.randint(0, 40); y = gy + r.randint(-14, 8); R(d, x, y, x + 1, y + 1, (232, 242, 244))
     return up(im)
 
 def helmet_face(d, cx, by, who, s=2, tint=(40, 50, 64), refl=None, **kw):
@@ -160,7 +162,7 @@ def s16_escape(t):                    # liftoff as the wave breaks
         d.line([edge, y, W, y], fill=mix((120, 150, 166), (60, 90, 110), q))
         R(d, edge, y, edge + 2, y, (220, 236, 240))
     ocean(d, 186, t)
-    k2 = clamp((t - 2) / 6) ** 1.5
+    k2 = max(0.0, (t - 2) / 6) ** 1.5
     ry = 176 - k2 * 150
     ranger(d, 170 - k2 * 140, ry, 1.2, -1, flame=t > 2, f=int(t * 24))
     r = random.Random(int(t * 10))
@@ -201,29 +203,69 @@ def s17_23years(t):                   # back aboard: Romilly has aged 23 years
     R(d, hx - 7, hy - 9, hx + 7, hy - 8, (120, 90, 60)); R(d, hx - 7, hy + 8, hx + 7, hy + 9, (120, 90, 60))
     return up(im)
 
-def s18_messages(t):                  # 23 years of messages from home
+def s18_messages(t):                  # 23 years of messages from home, one after another
     im, d = zcanvas((20, 20, 26))
-    R(d, 24, 10, 140, 84, (40, 40, 46)); R(d, 28, 14, 136, 80, (60, 70, 80))
-    k = min(3, int(t / 3.2))
-    grad(d, 14, 80, (130, 116, 100), (96, 84, 72), 28, 136)
-    who, kw = [('tom', {}), ('tomA', {}), ('tomA', dict(beard=(150, 110, 60))), ('murphA', dict(cry=clamp((t - 9.6) / 3)))][k]
-    portrait(d, 82, 80, who, 2, **kw)
-    yy = 14 + int(t * 20) % 66; d.line([28, yy, 136, yy], fill=(120, 126, 134))
-    portrait(d, 172, 108, 'cooperS', 1.6, cry=clamp((t - 4) / 7))
-    return up(im)
+    lean = clamp((t - 1) / 3) * 6
+    sx0, sx1 = 24, 140
+    R(d, sx0, 10, sx1, 84, (40, 40, 46)); R(d, sx0 + 4, 14, sx1 - 4, 80, (60, 70, 80))
+    CLIP = 3.2
+    k = min(3, int(t / CLIP)); lt = t - k * CLIP
+    grad(d, 14, 80, (130, 116, 100), (96, 84, 72), sx0 + 4, sx1 - 4)
+    who, kw = [('tom', {}), ('tomA', {}), ('tomA', dict(beard=(150, 110, 60))), ('murphA', {})][k]
+    talk = int(t * 7) % 3 != 0 and lt > 0.3
+    bob = math.sin(t * 2.3) * 1.2
+    if k == 3: kw = dict(cry=clamp((lt - 1.5) / 3), shock=False)
+    portrait(d, 82 + (math.sin(t * 1.3) * 2 if k == 3 else 0), 80 + bob + (4 if k == 3 and lt > 1 else 0), who, 2 if k < 3 else 2.2, talk=talk, **kw)
+    yy = 14 + int(t * 20) % 66; d.line([sx0 + 4, yy, sx1 - 4, yy], fill=(120, 126, 134))
+    if lt < 0.3 and t > 0.3:                      # static between clips
+        r = random.Random(int(t * 40))
+        for n in range(500): d.point((r.randint(sx0 + 4, sx1 - 4), r.randint(14, 80)), fill=r.choice([(200, 200, 200), (90, 90, 90), (30, 30, 30)]))
+    R(d, sx0 + 6, 16, sx0 + 9, 19, (230, 50, 50) if int(t * 2) % 2 else (90, 30, 30))       # rec light
+    out = up(im)
+    out = glow(out, 164, 96, 90, (120, 140, 170), 0.25)                                     # screen light on his face
+    d2 = ImageDraw.Draw(out)
+    pim, pd = zcanvas((0, 0, 0)); pim = pim.convert('RGBA'); pim.putalpha(0); pd = ImageDraw.Draw(pim)
+    portrait(pd, 172 - lean, 108, 'cooperS', 1.6, cry=clamp((t - 4) / 7), shock=k == 3 and lt < 1.2)
+    if t > 11.5: R(pd, 160 - lean, 92, 172 - lean, 98, SKIN)                                 # hand to his mouth
+    big = pim.resize((W, H), Image.NEAREST); out.paste(big, (0, 0), big)
+    return out
 
-def s19_murph(t):                     # on Earth: grown-up Murph at the professor's bedside
+def s19_murph(t):                     # Earth: Murph works the equation; the professor slips away
     im, d = zcanvas()
     grad(d, 0, ZH, (90, 96, 110), (60, 64, 74), 0, ZW)
     R(d, 10, 14, 90, 60, (34, 50, 40)); R(d, 10, 14, 90, 15, (120, 100, 70))
     r = random.Random(19)
+    lines = int(clamp(t / 4) * 8) if t < 4.5 else 8
     for k in range(8):
         y = 20 + k * 5; x = 14; pts = [(x, y)]
         for _ in range(10): x += r.randint(3, 7); pts.append((x, y + r.randint(-2, 2)))
-        d.line(pts, fill=(230, 230, 220))
+        if k < lines: d.line(pts, fill=(230, 230, 220))
+        elif k == lines and t < 4.5:
+            n = int((t / 4 * 8 - lines) * 10); d.line(pts[:max(2, n)], fill=(230, 230, 220))
+    # bed + professor
     R(d, 110, 76, 180, 86, (220, 220, 220)); R(d, 110, 70, 180, 77, (180, 200, 220)); R(d, 112, 86, 114, 100, (150, 150, 150)); R(d, 176, 86, 178, 100, (150, 150, 150))
     R(d, 112, 66, 124, 74, (240, 240, 240)); R(d, 114, 64, 122, 70, SKIN); R(d, 113, 63, 123, 65, (220, 220, 220))
-    person(d, 100 - clamp((t - 5) / 1) * 6, 100, 'murphA', 1, 'cover' if t > 5 else 'stand', cry=clamp((t - 5.5) / 4), shock=t > 5)
+    R(d, 116, 66, 120, 67, (40, 40, 40))
+    # heart monitor
+    R(d, 150, 40, 182, 60, (20, 24, 26)); R(d, 151, 41, 181, 59, (10, 30, 20))
+    alive = t < 7.5
+    for x in range(152, 181):
+        ph = (x - 152 + t * 30) % 22
+        y = 50 - (8 if alive and 10 < ph < 12 else 0) + (3 if alive and 12 <= ph < 13 else 0)
+        d.point((x, y), fill=(90, 255, 140) if alive else (255, 90, 90))
+    # Murph: at the board, then at his side
+    if t < 4.5:
+        arm = 'reach' if int(t * 4) % 2 else 'stand'
+        person(d, 60, 100, 'murphA', -1, arm)
+    elif t < 5.8:
+        k = (t - 4.5) / 1.3
+        person(d, lerp(60, 128, k), 100, 'murphA', 1, 'run', f=t * 10)
+    else:
+        if t < 7.5: person(d, 128, 100, 'murphA', 1, 'reach')
+        else:
+            back = clamp((t - 8) / 1.0) * 10
+            person(d, 128 - back, 100, 'murphA', 1, 'cover' if t > 8 else 'stand', cry=clamp((t - 8.5) / 4), shock=t > 8)
+    if 5.8 < t < 7.5: R(d, 123, 72, 127, 75, SKIN)        # his hand lifts to hers
     return up(im)
 
 SCENES = [

@@ -328,7 +328,7 @@ def zroom(d, light=(240, 210, 150), dark=False, dust=0.0, t=0.0):
             x = 120 + r.randrange(34); y = 18 + (r.randrange(34) + t * 10 * r.random()) % 34
             d.point((x, y), fill=(220, 190, 140))
 
-def portrait(d, cx, by, who='cooper', s=1, cry=0.0, beard=None, grey=False, smile=False, shock=False, light=0.0, closed=False):
+def portrait(d, cx, by, who='cooper', s=1, cry=0.0, beard=None, grey=False, smile=False, shock=False, light=0.0, closed=False, talk=False):
     """Head-and-shoulders bust. cx = centre, by = bottom edge. ~ 26*s tall."""
     c = CAST[who]; hair = (210, 210, 210) if grey else c['hair']
     sk = c.get('skin', SKIN); beard = beard or c.get('beard')
@@ -354,6 +354,7 @@ def portrait(d, cx, by, who='cooper', s=1, cry=0.0, beard=None, grey=False, smil
         B(-3.5, 18.5, -2, 17, (30, 24, 20)); B(2.5, 18.5, 4, 17, (30, 24, 20))
         B(-4, 21.5, -1, 21, shade(hair, .8)); B(1, 21.5, 4, 21, shade(hair, .8))
         B(-1.5, 14, 1.5, 11.5, (90, 40, 40))
+    elif talk: B(-2, 13.5, 2, 11.5, (110, 50, 50))
     elif smile: B(-3, 13, 3, 12.5, (150, 70, 60)); B(-3, 13.5, -2, 13, (150, 70, 60)); B(2, 13.5, 3, 13, (150, 70, 60))
     else: B(-2, 13, 2, 12.5, (170, 110, 90))
     if beard: B(-7, 10, 7, 14, beard); B(-3, 13, 3, 12, (150, 70, 60))

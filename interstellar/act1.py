@@ -54,10 +54,10 @@ def s02_dust(t):                      # a ball game... and the dust wall rolls i
         if bt < 0.55: R(d, lerp(190, 186, bt / 0.55), lerp(150, 182, bt / 0.55), lerp(190, 186, bt / 0.55) + 1, lerp(150, 182, bt / 0.55) + 1, (255, 255, 255))
     else:
         for k, (fx, fy) in enumerate(((192, 160), (184, 190), (198, 198), (250, 140), (140, 140), (110, 118), (192, 112), (280, 118))):
-            player(fx - flee * (140 + k * 10), fy + flee * 10, -1, 'run', f=t * 8 + k)
+            player(fx - (t - 5.0) * (48 + k * 4), fy + flee * 10, -1, 'run', f=t * 10 + k)
     for k, who in enumerate(['donald', 'murph', 'cooper', 'tom', 'murph', 'cooper']):      # spectators
         x = 18 + k * 13 + (k % 2) * 3; y = 150 + (k % 4) * 10
-        if flee > 0: x -= flee * 120; person(d, x, y, who, -1, 'run', f=t * 8 + k)
+        if flee > 0: x -= (t - 5.0) * 40; person(d, x, y, who, -1, 'run', f=t * 10 + k)
         else: person(d, x, y, who, 1)
     if wall:                                      # the dust wall eats the horizon, then the field
         wx = 420 - (t - 3.0) * 26
