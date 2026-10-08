@@ -77,9 +77,10 @@ def s15_wave(t):                      # those aren't mountains...
     for x in range(0, W, 3):                     # foam crest
         R(d, x, top + math.sin(x * 0.1 + t * 3) * 2, x + 2, top + 2 + math.sin(x * 0.1 + t * 3) * 2, (230, 240, 240))
     ocean(d, 160, t)
-    run = t * 42
-    tars(d, 250 - run, 200, f=t * 12, walk=True); astro(d, 260 - run, 178, -1, s=0.8)
-    astro(d, 300 - run, 196, -1, 'run', f=t * 10)
+    if t < 5:
+        run = t * 42
+        tars(d, 250 - run, 200, f=t * 12, walk=True); astro(d, 260 - run, 178, -1, s=0.8)
+        astro(d, 300 - run, 196, -1, 'run', f=t * 10)
     return im
 
 def s15a_wavewide(t):                 # wide: the "mountain" on the horizon rises and moves
@@ -108,9 +109,12 @@ def s15c_tarsrun(t):                  # TARS wheels through the water carrying B
     for n in range(50):
         y = 46 + r0.randrange(62); x = (r0.randrange(ZW) + t * 30) % ZW; d.line([x, y, x + 2, y], fill=(205, 222, 228))
     ranger(d, 52, 74, 0.8, -1)
-    astro(d, 60, 76, 1, 'reach', s=0.8)                                            # Romilly at the hatch
-    k = clamp(t / 6)
-    cx = lerp(186, 74, k); gy = 92
+    boarded = t > 5.0
+    if not boarded: astro(d, 60, 76, 1, 'reach', s=0.8)                            # Romilly at the hatch
+    R(d, 52, 66, 58, 74, (40, 44, 50) if t < 5.6 else (190, 190, 186))             # hatch: open, then shut
+    if boarded: return up(im)
+    k = clamp(t / 5)
+    cx = lerp(186, 70, k); gy = 92
     spin = -t * 8                                 # TARS on the move, slabs whirling like a wheel
     spr = Image.new('RGBA', (34, 34), (0, 0, 0, 0)); sd = ImageDraw.Draw(spr)
     for n in range(4):
@@ -154,7 +158,7 @@ def s15b_lookup(t):                   # close-up: Cooper looks up at the wave
 
 def s16_escape(t):                    # liftoff as the wave breaks
     im, d = canvas(); grad(d, 0, 216, (150, 160, 170), (196, 200, 200))
-    k = clamp(t / 8)
+    k = t / 8
     wx = 384 - k * 260
     for y in range(10, 216):                     # wall of water arriving from the right
         q = (y - 10) / 206
@@ -225,7 +229,7 @@ def s18_messages(t):                  # 23 years of messages from home, one afte
     out = glow(out, 164, 96, 90, (120, 140, 170), 0.25)                                     # screen light on his face
     d2 = ImageDraw.Draw(out)
     pim, pd = zcanvas((0, 0, 0)); pim = pim.convert('RGBA'); pim.putalpha(0); pd = ImageDraw.Draw(pim)
-    portrait(pd, 172 - lean, 108, 'cooperS', 1.6, cry=clamp((t - 4) / 7), shock=k == 3 and lt < 1.2)
+    portrait(pd, 172 - lean, 108, 'cooperS', 1.6, cry=clamp((t - 4) / 7))
     if t > 11.5: R(pd, 160 - lean, 92, 172 - lean, 98, SKIN)                                 # hand to his mouth
     big = pim.resize((W, H), Image.NEAREST); out.paste(big, (0, 0), big)
     return out

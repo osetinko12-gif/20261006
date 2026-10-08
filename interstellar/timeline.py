@@ -9,7 +9,7 @@ SHOTS = [
     # OPENING
     (op, 0, 14, 'op'),
     # ACT 1 — Earth
-    (s01_farm, 0, 8, 'earth'), (s02_dust, 0, 11, 'earth'), (s03_ghost, 0, 12, 'earth'),
+    (s01_farm, 0, 8, 'earth'), (s02_dust, 0, 11, 'earth'), (s03_ghost, 0, 9.5, 'earth'),
     (s04_drone, 0, 11, 'earth'), (s05_coords, 0, 10, 'earth'), (s06_nasa, 0, 12, 'earth'),
     (s07_goodbye, 0, 7, 'farewell'), (s07b_watches, 0, 5, 'farewell'), (s07_goodbye, 7, 11, 'farewell'),
     (s08_leave, 0, 5, 'launch'), (s09_launch, 0, 4, 'launch'), (s08_leave, 5, 11, 'launch'), (s09_launch, 4, 12, 'launch'),
