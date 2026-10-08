@@ -23,24 +23,80 @@ def s21_mann(t):                      # the hero wakes from cryosleep
     R(d, 30, 78, 100, 92, (220, 226, 232)); R(d, 32, 80, 98, 84, (150, 200, 230))      # cryo pod
     d.polygon([(30, 78), (36, 58), (104, 58), (100, 78)], fill=(190, 220, 236))          # lid swung open
     d.polygon([(34, 76), (39, 61), (100, 61), (97, 76)], fill=(160, 200, 224))
-    person(d, 60, 92, 'mann', 1, 'sit', cry=t > 2)
+    person(d, 60, 92, 'mann', 1, 'sit', cry=clamp((t - 2) / 5))
     r = random.Random(int(t * 6))
     for k in range(24): d.point((32 + r.randrange(66), 50 + r.randrange(40)), fill=(240, 250, 255))
     person(d, 140, 100, 'cooperS', -1); person(d, 160, 100, 'brand', -1)
     return up(im)
 
-def s22_betrayal(t):                  # on the ridge: Mann turns on Cooper
+def s22_betrayal(t):                  # Mann turns on Cooper: a brawl on the ice, then the visor
     im, d = zcanvas()
-    grad(d, 0, 60, (176, 190, 200), (214, 222, 228), 0, ZW)
+    grad(d, 0, 80, (176, 190, 200), (214, 222, 228), 0, ZW)
     d.polygon([(0, 70), (60, 64), (120, 72), (192, 60), (192, 108), (0, 108)], fill=(226, 232, 238))
     d.polygon([(0, 80), (192, 86), (192, 108), (0, 108)], fill=(206, 214, 222))
-    shove = clamp((t - 3) / 1.5)
-    astro(d, 90 - shove * 6, 88, 1, 'reach' if t < 6 else 'stand', visor=(80, 110, 140), s=1.3)
-    astro(d, 116 + shove * 14, 88 + shove * 6 + (6 if t > 5 else 0), -1, 'stand', visor=(70, 100, 130), crack=t > 5, s=1.3)
-    if t > 5:                                    # air hissing out of the cracked visor
+    MV, CV = (90, 120, 150), (70, 100, 130)
+    crack = t > 8.0
+    cop = astro_img(-1, 'stand', crack=crack, visor=CV); man = astro_img(1, 'reach', visor=MV)
+    gy = 90
+    if t < 2.0:                                   # face to face on the ridge
+        paste_rot(im, astro_img(1, 'stand', visor=MV), 78, gy - 26, 0); paste_rot(im, cop, 116, gy - 26, 0)
+    elif t < 3.0:                                 # Mann lunges, Cooper goes down
+        k = (t - 2) / 1
+        paste_rot(im, man, 78 + k * 22, gy - 26, -k * 20); paste_rot(im, cop, 116 + k * 8, gy - 26 + k * 12, 70 * k)
+    elif t < 7.0:                                 # rolling, grabbing, punching
+        ph = math.sin((t - 3) * 7)
+        cx = 108 + math.sin((t - 3) * 2.2) * 10
+        top_is_mann = int((t - 3) * 1.6) % 2 == 0
+        a1, a2 = 90 + ph * 25, -90 + ph * 30
+        if top_is_mann:
+            paste_rot(im, cop, cx, gy - 10, a1); paste_rot(im, man, cx + ph * 3, gy - 22, a2 * 0.4 - 20)
+        else:
+            paste_rot(im, man, cx, gy - 10, -a1); paste_rot(im, cop, cx - ph * 3, gy - 22, -a2 * 0.4 + 20)
         r = random.Random(int(t * 12))
-        for k in range(18): d.point((112 + shove * 14 + r.randint(-10, 10), 46 + r.randint(-8, 6)), fill=(240, 250, 255))
-    return shake(up(im), 3 if 3.2 < t < 3.8 or 5 < t < 5.4 else 0, int(t * 24))
+        for k in range(14): x = cx + r.randint(-30, 30); y = gy - r.randint(0, 12); R(d, x, y, x + 1, y + 1, (245, 248, 252))
+    elif t < 8.6:                                 # Mann pins him and slams his helmet into the visor
+        bob = abs(math.sin((t - 7) * 9)) * 6
+        paste_rot(im, cop, 108, gy - 10, 90); paste_rot(im, man, 110, gy - 30 + bob, -60)
+    else:                                         # Mann walks away; air hisses from the cracked visor
+        k = clamp((t - 8.6) / 3)
+        paste_rot(im, cop, 108, gy - 10, 90 + math.sin(t * 5) * 4)
+        paste_rot(im, astro_img(-1, 'walk', visor=MV, f=t * 5), 120 - k * 110, gy - 26, 0)
+        r = random.Random(int(t * 14))
+        for n in range(24): d.point((88 + r.randint(-8, 6), gy - 14 + r.randint(-12, 4)), fill=(250, 252, 255))
+    out = up(im)
+    hit = (2.6 < t < 3.0) or any(abs(t - (7.1 + n * 0.35)) < 0.08 for n in range(4)) or (8.0 < t < 8.3)
+    return shake(out, 4 if hit else (1 if 3 < t < 7 else 0), int(t * 24))
+
+def s22b_trap(t):                     # the station's robot was rigged — Romilly is caught in the blast
+    im, d = zcanvas()
+    grad(d, 0, ZH, (110, 116, 124), (70, 74, 82), 0, ZW)
+    R(d, 0, 84, ZW, ZH, (60, 64, 70)); R(d, 0, 84, ZW, 85, (130, 134, 140))
+    for x in range(10, ZW, 30): R(d, x, 10, x + 20, 30, (90, 96, 104)); R(d, x + 2, 12, x + 18, 28, (60, 140, 120) if (x // 30 + int(t * 2)) % 3 else (50, 60, 60))
+    for k in range(4): R(d, 110 + k * 5, 56, 114 + k * 5, 84, (54, 56, 60) if k % 2 else (66, 68, 72))   # the dead robot, dark
+    R(d, 112, 62, 127, 66, (20, 20, 22)); R(d, 113, 63, 116, 65, (200, 60, 50) if t > 3 and int(t * 6) % 2 else (40, 20, 20))
+    person(d, 96, 92, 'romilly', 1, 'reach')
+    out = up(im)
+    if t > 3.6:
+        k = clamp((t - 3.6) / 0.8)
+        out = glow(out, 236, 130, 40 + 400 * k, (255, 230, 180), 1.0)
+        if t > 4.4: out = Image.blend(out, Image.new('RGB', (W, H), (40, 30, 26)), clamp((t - 4.4) / 2.5))
+        out = shake(out, 5 if t < 5.2 else 1, int(t * 24))
+    return out
+
+def s22c_mannflies(t):                # Mann takes a ship alone and forces the docking
+    im, d = canvas((3, 4, 10)); stars(d, 221, 160)
+    R(d, 0, 176, W, H, (230, 236, 240)); d.ellipse([-200, 160, 584, 420], fill=(220, 228, 236))
+    endurance(d, 260, 80, 80, ang=0.15 * t + 0.4, tilt=0.42)
+    k = clamp(t / 6)
+    jitter = math.sin(t * 13) * 2 * k
+    ranger(d, lerp(10, 150, k ** 0.8), lerp(150, 92, k ** 0.8) + jitter, 0.9, 1, flame=True, f=int(t * 24))
+    R(d, lerp(10, 150, k ** 0.8) + 39, lerp(150, 92, k ** 0.8) + jitter - 7, lerp(10, 150, k ** 0.8) + 41, lerp(150, 92, k ** 0.8) + jitter - 5, SKIN)
+    if t > 6:                                     # grinding contact sparks at the hub
+        r = random.Random(int(t * 20))
+        for n in range(20):
+            x = 200 + r.randint(-6, 6); y = 84 + r.randint(-4, 4)
+            d.line([x, y, x + r.randint(-14, 14), y + r.randint(-10, 10)], fill=r.choice([(255, 220, 120), (255, 255, 230), (255, 160, 60)]))
+    return im
 
 def boom(d, cx, cy, k, seed=1):
     r = random.Random(seed)
@@ -83,6 +139,23 @@ def s24b_cockpit(t):                  # close-up: Cooper fighting the spin
     R(d, 116, 92, 126, 100, (40, 40, 44)); R(d, 112, 90, 118, 96, SKIN)                  # hand on the stick
     return shake(up(im), 1, int(t * 24))
 
+def s24c_cheer(t):                    # docked! relief and laughter in the cockpit
+    im, d = zcanvas((14, 14, 22))
+    stars_still = random.Random(3)
+    for k in range(50): d.point((stars_still.randrange(30, 162), stars_still.randrange(0, 60)), fill=(220, 220, 240))
+    R(d, 70, 22, 122, 50, (200, 200, 196)); R(d, 84, 30, 108, 42, (150, 150, 146))          # the docking hub, locked
+    R(d, 0, 66, ZW, ZH, (50, 52, 58)); d.polygon([(0, 0), (30, 0), (10, 66), (0, 66)], fill=(50, 52, 58)); d.polygon([(192, 0), (162, 0), (182, 66), (192, 66)], fill=(50, 52, 58))
+    for k in range(6): R(d, 20 + k * 28, 72, 30 + k * 28, 76, (80, 200, 110))              # all lights green
+    joy = t > 1.6
+    bob = abs(math.sin(t * 7)) * 2 if 1.6 < t < 4.5 else 0
+    portrait(d, 118, 108 - bob, 'cooperS', 1.5, smile=joy)
+    portrait(d, 72, 108 - (abs(math.sin(t * 7 + 1)) * 2 if 1.6 < t < 4.5 else 0), 'brand', 1.5, smile=joy, closed=2.0 < t < 3.4)
+    if joy:                                       # her hand on his shoulder
+        R(d, 90, 92, 102, 97, (178, 166, 132)); R(d, 100, 91, 106, 96, SKIN)
+    from common import tars
+    tars(d, 150, 100)
+    return up(im)
+
 def s25_gargantua(t):                 # Gargantua
     im, d = canvas((0, 0, 0)); stars(d, 25, 200)
     gargantua(d, 192, 100, 46, t)
@@ -96,9 +169,6 @@ def s26_detach(t):                    # Cooper lets go so she can make it
     k = clamp(t / 10)
     endurance(d, 300 + k * 30, 50 - k * 20, 14, ang=t * 0.2, tilt=0.5, dmg=True)
     ranger(d, lerp(286, 200, k), lerp(64, 110, k), 0.5, -1)
-    if t > 4:
-        R(d, 300, 150, 380, 210, (40, 40, 50))
-        portrait(d, 340, 210, 'brand', 1.8, cry=True)
     return im
 
 def s27_fall(t):                      # into the dark

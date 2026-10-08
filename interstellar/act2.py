@@ -117,8 +117,9 @@ def s16_escape(t):                    # liftoff as the wave breaks
         d.line([edge, y, W, y], fill=mix((120, 150, 166), (60, 90, 110), q))
         R(d, edge, y, edge + 2, y, (220, 236, 240))
     ocean(d, 186, t)
-    ry = 176 - clamp((t - 2) / 6) ** 1.5 * 160
-    ranger(d, 130, ry, 1.2, 1, flame=t > 2, f=int(t * 24))
+    k2 = clamp((t - 2) / 6) ** 1.5
+    ry = 176 - k2 * 150
+    ranger(d, 170 - k2 * 140, ry, 1.2, -1, flame=t > 2, f=int(t * 24))
     r = random.Random(int(t * 10))
     for n in range(70):
         y = r.randint(40, 216); x = wx - math.sin((y - 10) / 206 * 2.6) * 50 - r.randint(2, 30)
@@ -137,9 +138,17 @@ def stars_box(d, x0, y0, x1, y1, seed=2):
 
 def s17_23years(t):                   # back aboard: Romilly has aged 23 years
     im, d = zcanvas(); ship_interior(d)
-    person(d, 150, 100, 'romillyO', -1)
-    person(d, 62 - clamp((t - 2) / 1) * 4, 100, 'cooperS', 1, shock=t > 2)
-    person(d, 40, 100, 'brand', 1, 'cover' if t > 2.5 else 'stand', shock=t > 2)
+    walk = clamp((t - 4.5) / 3.0)
+    hug = t > 7.5
+    cx = lerp(62, 141, walk)
+    if hug:                                       # a long, gentle hug
+        sway = math.sin((t - 7.5) * 1.5) * 0.6
+        person(d, 141 + sway, 100, 'cooperS', 1, 'reach')
+        person(d, 150 + sway, 100, 'romillyO', -1, 'reach', cry=clamp((t - 8) / 3))
+    else:
+        person(d, 150, 100, 'romillyO', -1, 'stand' if t < 6.5 else 'reach')
+        person(d, cx if t > 4.5 else 62 - clamp((t - 2) / 1) * 4, 100, 'cooperS', 1, 'walk' if 0 < walk < 1 else 'stand', f=t * 6, shock=2 < t < 4.5)
+    person(d, 40, 100, 'brand', 1, 'cover' if 2.5 < t < 8 else 'stand', shock=2 < t < 4.5)
     # hourglass
     hx, hy = 100, 30
     d.polygon([(hx - 6, hy - 8), (hx + 6, hy - 8), (hx, hy)], fill=(230, 220, 180)); d.polygon([(hx - 6, hy + 8), (hx + 6, hy + 8), (hx, hy)], fill=(230, 220, 180))
@@ -154,10 +163,10 @@ def s18_messages(t):                  # 23 years of messages from home
     R(d, 24, 10, 140, 84, (40, 40, 46)); R(d, 28, 14, 136, 80, (60, 70, 80))
     k = min(3, int(t / 3.2))
     grad(d, 14, 80, (130, 116, 100), (96, 84, 72), 28, 136)
-    who, kw = [('tom', {}), ('tomA', {}), ('tomA', dict(beard=(150, 110, 60))), ('murphA', dict(cry=True))][k]
+    who, kw = [('tom', {}), ('tomA', {}), ('tomA', dict(beard=(150, 110, 60))), ('murphA', dict(cry=clamp((t - 9.6) / 3)))][k]
     portrait(d, 82, 80, who, 2, **kw)
-    for y in range(14, 80, 3): d.line([28, y, 136, y], fill=(70, 76, 84)) if (y + int(t * 30)) % 9 == 0 else None
-    portrait(d, 172, 108, 'cooperS', 1.6, cry=True)
+    yy = 14 + int(t * 20) % 66; d.line([28, yy, 136, yy], fill=(120, 126, 134))
+    portrait(d, 172, 108, 'cooperS', 1.6, cry=clamp((t - 4) / 7))
     return up(im)
 
 def s19_murph(t):                     # on Earth: grown-up Murph at the professor's bedside
@@ -171,7 +180,7 @@ def s19_murph(t):                     # on Earth: grown-up Murph at the professo
         d.line(pts, fill=(230, 230, 220))
     R(d, 110, 76, 180, 86, (220, 220, 220)); R(d, 110, 70, 180, 77, (180, 200, 220)); R(d, 112, 86, 114, 100, (150, 150, 150)); R(d, 176, 86, 178, 100, (150, 150, 150))
     R(d, 112, 66, 124, 74, (240, 240, 240)); R(d, 114, 64, 122, 70, SKIN); R(d, 113, 63, 123, 65, (220, 220, 220))
-    person(d, 100 - clamp((t - 5) / 1) * 6, 100, 'murphA', 1, 'cover' if t > 5 else 'stand', cry=t > 5, shock=t > 5)
+    person(d, 100 - clamp((t - 5) / 1) * 6, 100, 'murphA', 1, 'cover' if t > 5 else 'stand', cry=clamp((t - 5.5) / 4), shock=t > 5)
     return up(im)
 
 SCENES = [

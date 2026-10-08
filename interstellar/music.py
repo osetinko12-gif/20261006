@@ -117,23 +117,33 @@ pads(a, b, 46, ['F2 C3 A3', 'A2 E3 C4', 'D2 A2 F3', 'C2 G2 E3'], 0.05)
 tr.seq(a + 4, 46, 'A4:2 G4:1 F4:1 E4:4 F4:2 E4:1 D4:1 C4:4 A4:2 C5:2 B4:4', 'tri', 0.07, gate=0.95)
 for k in range(int((b - a) / 1.3)): pluck(a + k * 1.3, ['A4', 'C5', 'F4', 'E4'][k % 4], 0.03, 0.9)
 
-a, b = SEC['mann']                                                     # MANN — cold
+a, b = SEC['mann']                                                     # MANN — cold, then the brawl and the trap
 pads(a, b, 56, ['E2 B2 G3', 'C2 G2 E3', 'E2 B2 G3', 'F2 C3 Ab3'], 0.04)
 noise_bed(a, at('s22_betrayal', 0), 0.012, 300)                        # icy wind
-B0 = at('s22_betrayal', 3.2)
-arp(B0, b, 140, ['E3 F3', 'E3 Bb3'], div=4, vol=0.05, kind='saw', pattern=(0, 1))
-timpani(B0, 'E2', 0.7); timpani(at('s22_betrayal', 5.0), 'E2', 0.7)
+B0 = at('s22_betrayal', 2.6)
+arp(B0, at('s22_betrayal', 8.6), 140, ['E3 F3', 'E3 Bb3'], div=4, vol=0.05, kind='saw', pattern=(0, 1))
+timpani(B0, 'E2', 0.7)
+for n in range(4): timpani(at('s22_betrayal', 7.1 + n * 0.35), 'E2', 0.45)
+timpani(at('s22_betrayal', 8.0), 'E1', 0.8)
+organ(at('s22_betrayal', 8.6), 3.0, 'E2 B2 E3 G3', 0.05, att=0.3, rel=1.5)
+T0 = at('s22b_trap', 3.6); tr.boom(T0, 1.0, 3.5); timpani(T0, 'C1', 0.9)
 
-a, b = SEC['docking']                                                  # DOCKING — the big one
+a, b = SEC['docking']                                                  # DOCKING — Mann forces it, then Cooper's spin
+M0 = at('s22c_mannflies', 0)
+arp(M0, M0 + 7.5, 110, ['D3 Eb3', 'D3 Ab3'], div=4, vol=0.04, kind='saw', pattern=(0, 1))
+noise_bed(M0, M0 + 7.5, 0.03, 150)
 X = at('s23_explosion', 3.5)
 tr.boom(X, 0.9, 3.0); timpani(X, 'D1', 0.9)
-arp(X + 1, b, 120, ['D3 A3 D4 F4', 'Bb2 F3 Bb3 D4', 'F3 C4 F4 A4', 'C3 G3 C4 E4'], div=4, vol=0.06, pattern=(0, 1, 2, 3, 2, 1))
-for k, ch in enumerate(['D2 A2 D3 F3 A3', 'Bb1 F2 Bb2 D3 F3', 'F2 C3 F3 A3 C4', 'C2 G2 C3 E3 G3'] * 3):
+C0 = at('s24c_cheer', 0)
+arp(X + 1, C0, 120, ['D3 A3 D4 F4', 'Bb2 F3 Bb3 D4', 'F3 C4 F4 A4', 'C3 G3 C4 E4'], div=4, vol=0.06, pattern=(0, 1, 2, 3, 2, 1))
+for k, ch in enumerate(['D2 A2 D3 F3 A3', 'Bb1 F2 Bb2 D3 F3', 'F2 C3 F3 A3 C4', 'C2 G2 C3 E3 G3'] * 4):
     tt = X + 1 + k * 2.0
-    if tt < b: organ(tt, 2.1, ch, 0.08, att=0.05, rel=0.3)
-for k in range(int((b - X) / 1.0)): timpani(X + 1 + k * 1.0, 'D2', 0.35)
-noise_bed(at('s24_docking', 0), b, 0.05, 150)                          # thrusters
-organ(b - 0.2, 4.0, 'D2 A2 D3 F#3 A3 D4', 0.10, att=0.02, rel=2.5)     # docked: major resolve
+    if tt < C0 - 0.1: organ(tt, min(2.1, C0 - tt), ch, 0.08, att=0.05, rel=0.3)
+for k in range(int((C0 - X - 1) / 1.0)): timpani(X + 1 + k * 1.0, 'D2', 0.35)
+noise_bed(at('s24_docking', 0), C0, 0.05, 150)                         # thrusters
+tr.add(C0, osc('noise', 9, 0.15, 0.3, adsr=(0.001, 0.05, 0.3, 0.05)))  # clunk of the latch
+organ(C0 + 0.2, b - C0 + 1.0, 'D2 A2 D3 F#3 A3 D4', 0.09, att=0.05, rel=2.0)    # docked: major resolve
+tr.seq(C0 + 1.2, 96, 'A4:.5 D5:.5 F#5:1 E5:.5 F#5:.5 A5:2', 'sq', 0.06, duty=0.25, gate=0.9)
 
 a, b = SEC['garg']                                                     # GARGANTUA — awe
 organ(a, b - a, 'D1 A1 D2', 0.07, att=2.0, rel=2.0)

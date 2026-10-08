@@ -53,7 +53,7 @@ def s31_eureka(t):                    # grown Murph understands
     zroom(d, light=(255, 150, 70), dark=True)
     r = random.Random(int(t * 8))
     for k in range(20): d.point((120 + r.randrange(34), 18 + r.randrange(34)), fill=(255, 220, 120))
-    portrait(d, 92, 108, 'murphA', 2, cry=t > 3, smile=t > 6, shock=3 < t <= 6)
+    portrait(d, 92, 108, 'murphA', 2, cry=clamp((t - 4) / 5), smile=t > 6, shock=3 < t <= 6)
     watch(d, 60, 92, 5, ang=t * 4)
     im = up(im)
     if t > 4: im = glow(im, 120, 184, 140 * clamp((t - 4) / 2), (255, 200, 120), 0.5)
@@ -74,45 +74,83 @@ def s32_papers(t):                    # papers in the air, the corn on fire
         R(d, x, y, x + 4, y + 5, (250, 250, 240))
     return im
 
-def s33_station(t):                   # Cooper Station: the world curves overhead
+def s33_station(t):                   # Cooper Station: a ball game where "up" is someone's roof
     im, d = canvas()
     grad(d, 0, H, (150, 196, 236), (190, 220, 240))
-    for y in range(0, 56):                       # the far side of the cylinder, upside down
-        d.line([0, y, W, y], fill=mix((100, 140, 84), (150, 196, 236), (y / 56) ** 2))
-    for k in range(5):
-        x = 20 + k * 80; R(d, x, 14, x + 26, 26, (214, 208, 196)); d.polygon([(x - 2, 26), (x + 13, 34), (x + 28, 26)], fill=(120, 76, 64))
+    for y in range(0, 56): d.line([0, y, W, y], fill=mix((100, 140, 84), (150, 196, 236), (y / 56) ** 2))
+    houses = [20 + k * 80 for k in range(5)]
+    hit_house = 180
+    for x in houses:                              # the far side of the cylinder, upside down
+        R(d, x, 14, x + 26, 26, (214, 208, 196)); d.polygon([(x - 2, 26), (x + 13, 34), (x + 28, 26)], fill=(120, 76, 64))
+        win = (90, 130, 170)
+        R(d, x + 9, 16, x + 17, 22, win)
         R(d, x + 34, 10, x + 40, 22, (60, 110, 60))
     for k in range(4): d.arc([-200 - k * 40, -180 + k * 6, 584 + k * 40, 110 + k * 6], 20, 160, fill=(130, 170, 120))
-    grad(d, 160, H, (120, 160, 96), (96, 136, 80))
-    for k in range(4):
-        x = 30 + k * 90; R(d, x, 140, x + 40, 166, (232, 228, 216)); d.polygon([(x - 4, 140), (x + 20, 124), (x + 44, 140)], fill=(130, 80, 66))
-        R(d, x + 16, 152, x + 24, 166, (120, 90, 70))
-    bx, by = 60 + t * 30, 150 - math.sin(t * 0.8) * 100
-    R(d, bx, by, bx + 2, by + 2, (255, 255, 255))
-    person(d, 300, 196, 'cooper', -1, 'shade', shock=True)
+    grad(d, 150, H, (120, 160, 96), (96, 136, 80))
+    for k in range(3):
+        x = 250 + k * 46; R(d, x, 130, x + 36, 152, (232, 228, 216)); d.polygon([(x - 4, 130), (x + 18, 116), (x + 40, 130)], fill=(130, 80, 66))
+    d.polygon([(110, 160), (160, 180), (110, 200), (60, 180)], fill=(186, 146, 100))     # little diamond
+    d.polygon([(110, 166), (150, 180), (110, 194), (70, 180)], fill=(120, 160, 96))
+    CAST['_kid'] = dict(hair=(120, 80, 50), top=(60, 90, 160), bot=(70, 70, 80), h=18)
+    CAST['_kid2'] = dict(hair=(40, 30, 24), top=(200, 70, 60), bot=(70, 70, 80), h=18)
+    swing = 1.2 < t < 1.6
+    person(d, 104, 200, '_kid', 1, 'reach' if swing else 'stand')
+    person(d, 110, 172, '_kid2', -1, 'reach' if t < 1.1 else 'stand')
+    person(d, 156, 176, '_kid2', -1); person(d, 70, 172, '_kid', 1)
+    if t < 1.3: R(d, lerp(108, 106, t / 1.3), lerp(160, 188, t / 1.3), lerp(108, 106, t / 1.3) + 1, lerp(160, 188, t / 1.3) + 1, (255, 255, 255))
+    elif t < 5.0:                                  # the ball climbs... and keeps climbing to the "ceiling"
+        k = (t - 1.3) / 3.7
+        bx = lerp(108, hit_house + 13, k); by = lerp(188, 20, k) - math.sin(k * math.pi) * 20
+        R(d, bx, by, bx + 1, by + 1, (255, 255, 255))
+        for n in range(1, 4): d.point((lerp(108, hit_house + 13, k - n * 0.02), lerp(188, 20, k - n * 0.02)), fill=(220, 230, 240))
+    else:                                          # smash
+        r = random.Random(int(t * 10))
+        R(d, hit_house + 9, 16, hit_house + 17, 22, (40, 40, 50))
+        if t < 6.5:
+            for n in range(16): d.point((hit_house + 13 + r.randint(-8, 8), 22 + r.randint(0, 14)), fill=(220, 240, 255))
+    person(d, 320, 196, 'cooperS', -1, 'shade', shock=t > 5)
     return im
 
-def s34_family(t):                    # old Murph, surrounded by her family
+def s34_family(t):                    # old Murph in her bed, her family around her
     im, d = zcanvas()
     grad(d, 0, ZH, (200, 210, 220), (160, 170, 182), 0, ZW)
-    R(d, 30, 64, 130, 76, (236, 236, 236)); R(d, 30, 58, 130, 65, (190, 206, 222))
-    R(d, 34, 52, 50, 62, (240, 240, 240)); R(d, 36, 52, 48, 60, SKIN); R(d, 35, 50, 49, 53, (225, 225, 225))
-    for k, who in enumerate(['tomA', 'murphA', 'brand', 'tom', 'murph', 'cooper']):
-        if who == 'cooper': continue
-        person(d, 40 + k * 14, 100, who, 1)
+    R(d, 0, 92, ZW, ZH, (150, 156, 166))
+    R(d, 24, 62, 110, 74, (236, 236, 236)); R(d, 24, 74, 110, 78, (200, 200, 206))        # bed
+    R(d, 24, 52, 28, 78, (170, 170, 176)); R(d, 106, 58, 110, 78, (170, 170, 176))
+    R(d, 26, 78, 28, 92, (150, 150, 156)); R(d, 106, 78, 108, 92, (150, 150, 156))
+    R(d, 28, 58, 44, 64, (250, 250, 250))                                                     # pillow
+    R(d, 32, 55, 40, 61, SKIN); R(d, 30, 54, 42, 57, (236, 236, 236)); R(d, 29, 56, 32, 63, (236, 236, 236))   # her face, white hair
+    d.point((38, 58), fill=(40, 30, 30))
+    R(d, 42, 58, 108, 64, (190, 206, 222)); R(d, 42, 58, 108, 59, (220, 230, 240))          # blanket over her
+    for k, who in enumerate(['tomA', 'murphA', 'tom', 'murph']):
+        person(d, 40 + k * 15, 100, who, 1)
     walk = clamp(t / 6)
-    person(d, 180 - walk * 30, 100, 'cooperS', -1, 'walk' if walk < 1 else 'stand', f=t * 6)
+    person(d, 182 - walk * 52, 100, 'cooperS', -1, 'walk' if walk < 1 else 'stand', f=t * 6)
     return up(im)
 
 def s35_hands(t):                     # father, younger than his daughter
     im, d = zcanvas((40, 44, 56))
     grad(d, 0, ZH, (210, 196, 176), (150, 136, 120), 0, ZW)
-    portrait(d, 54, 108, 'murphO', 2.2, grey=True, cry=t > 2, smile=t > 6)
-    portrait(d, 140, 108, 'cooperS', 2.2, cry=t > 2)
+    portrait(d, 54, 108, 'murphO', 2.2, grey=True, cry=clamp((t - 1.5) / 5), smile=t > 3.5)
+    portrait(d, 140, 108, 'cooperS', 2.2, cry=clamp((t - 2) / 5))
     R(d, 82, 92, 112, 98, SKIN); R(d, 96, 90, 98, 100, shade(SKIN, .85))
     im = up(im)
     if t > 6: im = glow(im, 192, 190, 160 * clamp((t - 6) / 3), (255, 220, 170), 0.22)
     return im
+
+def s35b_hug(t):                      # father holds his old daughter, cheek to cheek
+    im, d = zcanvas((40, 44, 56))
+    grad(d, 0, ZH, (214, 198, 176), (150, 136, 120), 0, ZW)
+    d.rounded_rectangle([30, 44, 96, 100], 8, fill=(240, 238, 234)); d.rounded_rectangle([30, 44, 96, 100], 8, outline=(220, 216, 210))   # pillow
+    lean = clamp(t / 1.5)
+    portrait(d, 74, 108, 'murphO', 2.0, grey=True, closed=t > 1.2, smile=t > 1.2, cry=clamp((t - 1) / 4))
+    portrait(d, 122 - lean * 14, 108 + lean * 3, 'cooperS', 2.0, closed=t > 1.6, cry=clamp((t - 2) / 5))
+    c = CAST['cooperS']['top']
+    if lean > 0.8:
+        R(d, 52, 92, 92, 97, c); R(d, 52, 92, 92, 93, shade(c, 1.15)); R(d, 46, 91, 53, 97, SKIN)   # his arm around her shoulders
+        R(d, 126, 90, 132, 96, shade(SKIN, .95))                                                 # her hand on his back
+    im = up(im)
+    return glow(im, 196, 150, 150 * clamp((t - 3) / 3), (255, 220, 170), 0.16)
 
 def s36_depart(t):                    # he takes a ship and goes to find her
     im, d = canvas((2, 3, 10)); stars(d, 36, 200)

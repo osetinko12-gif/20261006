@@ -110,7 +110,10 @@ def person(d, x, y, who='cooper', face=1, pose='stand', f=0, beard=None, cry=Fal
     if c.get('glasses'): B(0.5, hy + 4.2, 3, hy + 4.2, (40, 40, 40))
     if c.get('stubble') and not beard: B(-1, hy, 3, hy + 1, shade(sk, .82))
     if beard: B(-1.5, hy - 0.5, 3, hy + 2.5, beard)
-    if cry: d.point((X(1.6), Y(hy + 2.2)), fill=(120, 190, 255)); d.point((X(1.6), Y(hy + 1.2)), fill=(120, 190, 255))
+    cry = float(cry)
+    if cry > 0:
+        d.point((X(1.6), Y(hy + 3.6)), fill=mix((30, 24, 20), (170, 210, 240), min(1, cry * 2) * 0.5))
+        if cry > 0.5: d.point((X(1.6), Y(hy + 2.6 - (cry - 0.5) * 2)), fill=mix(sk, (150, 200, 245), 0.7))
 
 def lie(d, x, y, who, face=1):
     c = CAST[who]
@@ -325,7 +328,7 @@ def zroom(d, light=(240, 210, 150), dark=False, dust=0.0, t=0.0):
             x = 120 + r.randrange(34); y = 18 + (r.randrange(34) + t * 10 * r.random()) % 34
             d.point((x, y), fill=(220, 190, 140))
 
-def portrait(d, cx, by, who='cooper', s=1, cry=False, beard=None, grey=False, smile=False, shock=False, light=0.0):
+def portrait(d, cx, by, who='cooper', s=1, cry=0.0, beard=None, grey=False, smile=False, shock=False, light=0.0, closed=False):
     """Head-and-shoulders bust. cx = centre, by = bottom edge. ~ 26*s tall."""
     c = CAST[who]; hair = (210, 210, 210) if grey else c['hair']
     sk = c.get('skin', SKIN); beard = beard or c.get('beard')
@@ -354,7 +357,17 @@ def portrait(d, cx, by, who='cooper', s=1, cry=False, beard=None, grey=False, sm
     elif smile: B(-3, 13, 3, 12.5, (150, 70, 60)); B(-3, 13.5, -2, 13, (150, 70, 60)); B(2, 13.5, 3, 13, (150, 70, 60))
     else: B(-2, 13, 2, 12.5, (170, 110, 90))
     if beard: B(-7, 10, 7, 14, beard); B(-3, 13, 3, 12, (150, 70, 60))
-    if cry: B(-4, 16.5, -3, 13, (130, 190, 255)); B(3, 16.5, 4, 14, (130, 190, 255))
+    cry = float(cry)
+    if closed:
+        B(-5, 18.5, -1, 17, sk); B(1, 18.5, 5, 17, sk)
+        B(-4.5, 17.6, -1.5, 17, (30, 24, 20)); B(1.5, 17.6, 4.5, 17, (30, 24, 20))
+    if cry > 0:                                   # wet eyes first, then a single slow drop
+        tearc = mix(sk, (150, 200, 245), 0.75)
+        if not closed: B(-4, 17.2, -2, 16.6, mix((30, 24, 20), (190, 225, 250), min(1, cry * 2) * 0.6))
+        if cry > 0.4:
+            k = (cry - 0.4) / 0.6
+            B(-3.6, 16.5 - k * 4, -2.6, 15.5 - k * 4, tearc)
+            if k > 0.3: B(-3.4, 16.5, -2.8, 16.5 - k * 3, mix(sk, (150, 200, 245), 0.35))
     if light: B(-7, 25, 7, 10, None) if False else None
 
 
@@ -371,3 +384,14 @@ def shake(im, amt, seed):
     if amt <= 0: return im
     r = random.Random(seed); dx, dy = r.randint(-amt, amt), r.randint(-amt, amt)
     out = Image.new('RGB', im.size, (0, 0, 0)); out.paste(im, (dx, dy)); return out
+
+
+def astro_img(face=1, pose='stand', crack=False, s=1.3, visor=(70, 100, 130), f=0):
+    """Astronaut on its own transparent sprite so it can be rotated (falls, wrestling)."""
+    im = Image.new('RGBA', (int(34 * s), int(44 * s)), (0, 0, 0, 0)); dd = ImageDraw.Draw(im)
+    astro(dd, im.width // 2, int(40 * s), face, pose, f=f, visor=visor, crack=crack, s=s)
+    return im
+
+def paste_rot(im, spr, cx, cy, ang):
+    r = spr.rotate(ang, resample=Image.NEAREST, expand=True)
+    im.paste(r, (int(cx - r.width / 2), int(cy - r.height / 2)), r)

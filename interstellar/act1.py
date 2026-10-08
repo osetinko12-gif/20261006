@@ -1,36 +1,70 @@
 from common import *
 
-def s01_farm(t):                      # dusty dawn on the farm
+def s01_farm(t):                      # dusty morning: Cooper heads out in the pickup with the kids
     im, d = canvas(); grad(d, 0, 110, (200, 170, 130), (236, 206, 150))
     R(d, 250, 40, 266, 56, (255, 236, 190))
     for k in range(5): R(d, (k * 90 + t * 4) % 420 - 30, 30 + k * 12, (k * 90 + t * 4) % 420 + 30, 33 + k * 12, (214, 184, 140))
     d.polygon([(0, 112), (80, 100), (180, 106), (300, 98), (384, 108), (384, 116), (0, 116)], fill=(170, 150, 110))
     corn(d, 114, 216, t)
     farmhouse(d, 40, 140, 1.0)
-    R(d, 26, 100, 30, 140, (80, 70, 60)); R(d, 20, 96, 36, 100, (90, 80, 70))  # windmill pole
+    R(d, 26, 100, 30, 140, (80, 70, 60)); R(d, 20, 96, 36, 100, (90, 80, 70))
     a = t * 2
     for k in range(4): d.line([28, 96, 28 + math.cos(a + k * 1.57) * 12, 96 + math.sin(a + k * 1.57) * 12], fill=(90, 80, 70))
-    R(d, 110, 138, 200, 142, (150, 120, 80))
-    truck(d, 120, 142, 1, f=t)
-    person(d, 186, 142, 'cooper', -1)
+    R(d, 0, 138, W, 142, (150, 120, 80))
+    drive = clamp((t - 5.5) / 4) ** 1.5
+    tx = 130 + drive * 300
+    truck(d, tx, 142, 1, f=t)
+    if t < 4.5:                                  # Cooper walks from the porch to the truck
+        person(d, lerp(70, 150, clamp(t / 4)), 142, 'cooper', 1, 'walk' if t < 4 else 'stand', f=t * 6)
+    if 1.5 < t < 5.0:                            # the kids run after him
+        k = clamp((t - 1.5) / 3)
+        person(d, lerp(66, 140, k), 142, 'murph', 1, 'run', f=t * 8); person(d, lerp(56, 128, k), 142, 'tom', 1, 'run', f=t * 8 + 2)
+    if drive > 0:
+        r = random.Random(int(t * 10))
+        for k in range(int(40 * min(1, drive * 3))):
+            x = tx - r.randint(0, 90); y = 132 + r.randint(-8, 8); R(d, x, y, x + 2, y + 1, (214, 190, 150))
     r = random.Random(int(t * 6))
     for k in range(60): d.point((r.randrange(W), r.randrange(H)), fill=(220, 200, 160))
     return im
 
-def s02_dust(t):                      # the dust wall over the ball game
-    im, d = canvas(); grad(d, 0, 120, (150, 170, 190), (210, 200, 180))
-    R(d, 0, 120, W, H, (110, 140, 70)); d.polygon([(130, 216), (192, 150), (254, 216)], fill=(190, 150, 100))
-    for k in range(4): R(d, 60 + k * 8, 100 + k * 6, 160, 104 + k * 6, (170, 170, 170))
-    for k in range(4): R(d, 60 + k * 8, 104 + k * 6, 160 + k * 0, 106 + k * 6, (120, 120, 120))
-    for k in range(6): person(d, 70 + k * 14, 100 + (k % 4) * 6, ['cooper', 'tom', 'murph', 'donald', 'tom', 'murph'][k], 1)
-    wx = 384 - t * 22
-    for y in range(0, 216, 2):
-        edge = wx + math.sin(y * 0.08 + t * 2) * 10 + math.sin(y * 0.21) * 5
-        d.line([edge, y, W, y], fill=mix((150, 110, 70), (110, 80, 50), y / 216))
-        for k in range(3): d.point((edge - k * 3 - (y * 7) % 5, y), fill=(170, 130, 90))
-    for k in range(6):
-        px = 200 + k * 16 - t * 18 * (k % 2 + 1)
-        person(d, px, 190 + (k % 3) * 8, ['tom', 'murph', 'cooper', 'donald', 'tom', 'cooper'][k], -1, 'run', f=t * 8 + k)
+def s02_dust(t):                      # a ball game... and the dust wall rolls in
+    im, d = canvas(); grad(d, 0, 110, (150, 170, 190), (210, 200, 180))
+    R(d, 0, 104, W, H, (110, 142, 72))
+    for k in range(0, W, 16): R(d, k, 104, k + 7, H, (104, 136, 68))                 # mown stripes
+    d.polygon([(192, 118), (262, 156), (192, 194), (122, 156)], fill=(186, 146, 100))   # infield diamond
+    d.polygon([(192, 126), (250, 156), (192, 186), (134, 156)], fill=(116, 148, 76))
+    for bx, by in ((192, 190), (258, 156), (192, 122), (126, 156)): R(d, bx - 2, by - 1, bx + 2, by + 1, (245, 245, 240))
+    R(d, 0, 96, W, 104, (90, 90, 96))                                                  # outfield fence
+    for k in range(4):                                                                 # bleachers (left)
+        R(d, 8 + k * 6, 150 + k * 10, 92, 154 + k * 10, (170, 170, 170)); R(d, 8 + k * 6, 154 + k * 10, 92, 156 + k * 10, (120, 120, 120))
+    wall = t > 3.0
+    flee = clamp((t - 5.0) / 6)
+    UNI = (236, 236, 236)
+    # players: pitcher, batter, catcher, fielders (white uniforms)
+    def player(x, y, face=1, pose='stand', f=0):
+        CAST['_p'] = dict(hair=(60, 40, 30), top=UNI, bot=UNI, h=22)
+        person(d, x, y, '_p', face, pose, f=f)
+        R(d, x - 3, y - 22, x + 3, y - 20, (40, 60, 140))
+    if flee == 0:
+        player(192, 160, -1, 'reach' if (t % 2.2) < 0.4 else 'stand')
+        swing = (t % 2.2) > 0.5 and (t % 2.2) < 0.9
+        player(184, 190, 1, 'reach' if swing else 'stand'); player(198, 198, -1)
+        for fx, fy in ((250, 140), (140, 140), (110, 118), (192, 112), (280, 118)): player(fx, fy, -1)
+        bt = t % 2.2
+        if bt < 0.55: R(d, lerp(190, 186, bt / 0.55), lerp(150, 182, bt / 0.55), lerp(190, 186, bt / 0.55) + 1, lerp(150, 182, bt / 0.55) + 1, (255, 255, 255))
+    else:
+        for k, (fx, fy) in enumerate(((192, 160), (184, 190), (198, 198), (250, 140), (140, 140), (110, 118), (192, 112), (280, 118))):
+            player(fx - flee * (140 + k * 10), fy + flee * 10, -1, 'run', f=t * 8 + k)
+    for k, who in enumerate(['donald', 'murph', 'cooper', 'tom', 'murph', 'cooper']):      # spectators
+        x = 18 + k * 13 + (k % 2) * 3; y = 150 + (k % 4) * 10
+        if flee > 0: x -= flee * 120; person(d, x, y, who, -1, 'run', f=t * 8 + k)
+        else: person(d, x, y, who, 1)
+    if wall:                                      # the dust wall eats the horizon, then the field
+        wx = 420 - (t - 3.0) * 26
+        for y in range(0, 216, 2):
+            edge = wx + math.sin(y * 0.08 + t * 2) * 10 + math.sin(y * 0.21) * 5 - (216 - y) * 0.15
+            d.line([edge, y, W, y], fill=mix((150, 110, 70), (110, 80, 50), y / 216))
+            for k in range(3): d.point((edge - k * 3 - (y * 7) % 5, y), fill=(170, 130, 90))
     return im
 
 def s03_ghost(t):                     # Murph's room: fallen book, dust lines
@@ -122,7 +156,7 @@ def s06_nasa(t):                      # NASA hidden in a silo; the professor's p
 
 def s07_goodbye(t):                   # the watch, the turned back
     im, d = zcanvas(); zroom(d, light=(250, 196, 136))
-    person(d, 86, 100, 'murph', -1, cry=True)
+    person(d, 86, 100, 'murph', -1, cry=clamp((t - 1) / 5))
     person(d, 116, 102, 'cooper', -1, 'give' if t < 7 else 'stand')
     if t < 7: watch(d, 104, 84, 2)
     else: watch(d, 176, 54, 2, ang=t)            # left on the bed
@@ -150,7 +184,7 @@ def s08_leave(t):                     # driving off; she runs out too late
     truck(d, tx, 170, -1, col=(120, 90, 60), f=t)
     r = random.Random(int(t * 10))
     for k in range(50): R(d, tx + r.randint(0, 160), 158 + r.randint(-14, 8), tx + r.randint(0, 160) + 3, 161 + r.randint(-14, 8), (210, 190, 150))
-    if t > 6: person(d, 276 - (t - 6) * 14, 170, 'murph', -1, 'run', f=t * 8, cry=True)
+    if t > 6: person(d, 276 - (t - 6) * 14, 170, 'murph', -1, 'run', f=t * 8, cry=0.4)
     person(d, 340, 170, 'donald', -1); person(d, 320, 170, 'tom', -1, 'wave')
     return im
 
