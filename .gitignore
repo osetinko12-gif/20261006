@@ -4,3 +4,5 @@ reel/out/list.txt
 __pycache__/
 interstellar/out/
 *.mp4
+manga_sozai/out/
+manga_sozai/dist/
