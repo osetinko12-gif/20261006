@@ -21,6 +21,7 @@ FONTS = {
     "kurenaido": ("ZenKurenaido_400Regular.ttf", "細筆"),
     "maru": ("HachiMaruPop_400Regular.ttf", "丸文字"),
     "magic": ("YuseiMagic_400Regular.ttf", "マジック"),
+    "pop": ("MochiyPopOne_400Regular.ttf", "ポップ"),
     "reggae": ("ReggaeOne_400Regular.ttf", "極太"),
 }
 SMALL = set("っゃゅょぁぃぅぇぉッャュョァィゥェォ")
@@ -131,7 +132,14 @@ def word(text, fontkey, size, seed, bold=0.0, wob=0.007, tilt=8, jitter=0.06, st
     parts = []
     y = 0.0
     sway = r.uniform(-0.1, 0.1)
+    last = None  # 直前の文字の (中心y, 大きさ)
     for i, ch in enumerate(text):
+        if ch in "゛゙" and last is not None:
+            ly, lh = last
+            d1 = Point(0, 0).buffer(0.06, quad_segs=8).union(Point(0.13, -0.04).buffer(0.06, quad_segs=8))
+            d1 = affinity.rotate(affinity.scale(d1, 1, 1.6), 25, origin=(0, 0))
+            parts.append(affinity.translate(d1, 0.42 * lh, ly - 0.32 * lh))
+            continue
         if ch in "ー―〜～":
             L = r.uniform(0.9, 1.6)
             g = long_bar(L, r, wavy=ch in "〜～")
@@ -167,13 +175,37 @@ def word(text, fontkey, size, seed, bold=0.0, wob=0.007, tilt=8, jitter=0.06, st
         g = affinity.scale(g, sc, sc, origin=(0, 0))
         h = sc * (0.62 if ch in SMALL else 1.0)
         parts.append(affinity.translate(g, dx, y + h / 2))
+        last = (y + h / 2, h)
         y += h * step
     G = unary_union(parts)
     G = wobble(G, wob, r)
     if bold:
         G = G.buffer(bold, quad_segs=6).buffer(-bold * 0.3, quad_segs=6)
     G = affinity.rotate(G, r.uniform(-6, 6), origin=(0, 0))
+    G = G.simplify(0.0015, preserve_topology=True)
     return affinity.scale(G, size, size, origin=(0, 0))
+
+
+PINK = "#FF4F93"
+STYLES = {  # フォルダ名: (説明, 文字色, フチ色, フチの太さの係数)
+    "1_黒文字": ("黒文字", BLACK, None, 0),
+    "2_白文字_黒フチ": ("白文字＋黒フチ", WHITE, BLACK, 0.55),
+    "3_黒文字_白フチ": ("黒文字＋白フチ", BLACK, WHITE, 1.0),
+    "4_ピンク_白フチ": ("ピンク＋白フチ", PINK, WHITE, 1.0),
+}
+
+
+def save_styled(g, base, style, fringe=0.9, png=True):
+    _, fill, edge, k = STYLES[style]
+    layers = []
+    if edge:
+        layers.append((g.buffer(fringe * k, quad_segs=6), edge))
+    layers.append((g, fill))
+    cv = fit_canvas([l for l, _ in layers], margin=1.0)
+    for l, c in layers:
+        cv.add(l, c)
+    cv.save(base, png=png)
+    return base + ".svg"
 
 
 def save(g, path, style="black", fringe=0.9):
