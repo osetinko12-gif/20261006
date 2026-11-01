@@ -84,7 +84,9 @@ def make_zips():
              "■ 使い方のヒント",
              "・SVGは色を自由に変えられます（Illustrator・Affinity・Inkscapeなどで塗りの色を変更）",
              "・白フチ版は、絵の上に置いても文字が埋もれません",
-             "・左右反転・回転・変形してもOKです", "", APPS_TXT, TERMS_TXT,
+             "・左右反転・回転・変形してもOKです", "",
+             "■ おまけ：修正素材", "・黒棒・白棒・ハート隠し・星隠し・光修正・湯気隠し（おまけ_修正素材フォルダ）",
+             "・修正の程度は、販売先の規約と法令に合わせてご判断ください", "", APPS_TXT, TERMS_TXT,
              "■ ご注意", "・成人向け作品での使用を想定した素材です。18歳未満の方はご購入いただけません。"]
     with open(os.path.join(common, "商品説明.txt"), "w", encoding="utf-8-sig") as f:
         f.write("\n".join(desc))
@@ -105,6 +107,13 @@ def make_zips():
                         z.write(os.path.join(full, g), os.path.join(root, fn, g))
                 else:
                     z.write(full, os.path.join(root, fn))
+            sh = os.path.join(os.path.dirname(OUT), "seijin", "07_shusei")
+            for fn in sorted(os.listdir(sh)):
+                if fn.endswith(".png"):
+                    to_la(os.path.join(sh, fn), tmp)
+                    z.write(tmp, os.path.join(root, "おまけ_修正素材", "PNG", fn))
+                elif fn.endswith(".svg"):
+                    z.write(os.path.join(sh, fn), os.path.join(root, "おまけ_修正素材", "SVG", fn))
             for fdir, _, _ in FONT_SET:
                 for c in cats:
                     for cc, w in rows:
@@ -123,6 +132,39 @@ def make_zips():
         paths.append(zpath)
     shutil.rmtree(common)
     return total_words, n_items
+
+
+TRIAL = ["あっ♡", "んぅ", "はぁはぁ", "ひぅっ", "らめぇ", "きもちいぃ♡", "くちゅくちゅ", "じゅぷっ", "ぬちゅ",
+         "とろぉ", "びゅるっ", "どくどく", "ぱんぱん", "ずぷっ", "ちゅっ", "れろれろ", "むにゅ", "ぷるん", "ビクビク", "ゾクゾク"]
+
+
+def make_trial():
+    """無料お試し版：20語×4書体×4色."""
+    rows = [r for r in manifest() if r[1] in TRIAL]
+    zname = "{}_お試し版_無料.zip".format(ZIP_BASE)
+    zpath = os.path.join(DIST, zname)
+    root = zname[:-4]
+    tmp = os.path.join(DIST, "_kaki_tmp.png")
+    with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+        z.writestr(os.path.join(root, "はじめにお読みください.txt"), "\ufeff" + "\n".join([
+            "{}【お試し版】".format(TITLE), "",
+            "製品版593語のうち{}語を、4書体×4色すべて収録した無料お試し版です。".format(len(rows)),
+            "製品版には、喘ぎ声・セリフ・水音・射精音・挿入音・キス・体・反応の全593語（9,488点）と、おまけの修正素材が入っています。", "",
+            TERMS_TXT, "■ ご注意", "・成人向け作品での使用を想定した素材です。18歳未満の方はご利用いただけません。"]))
+        for st in STYLES:
+            for fdir, _, _ in FONT_SET:
+                for c, w in rows:
+                    base = os.path.join(OUT, st, fdir, c, fname(w))
+                    if st.startswith("4_"):
+                        z.write(base + ".png", os.path.join(root, st, "PNG", fdir, fname(w) + ".png"))
+                    else:
+                        to_la(base + ".png", tmp)
+                        z.write(tmp, os.path.join(root, st, "PNG", fdir, fname(w) + ".png"))
+                    z.write(base + ".svg", os.path.join(root, st, "SVG", fdir, fname(w) + ".svg"))
+    if os.path.exists(tmp):
+        os.remove(tmp)
+    print("zip", zname, os.path.getsize(zpath) // 1024 // 1024, "MB")
+    return zpath
 
 
 # ---------------------------------------------------------------- images
@@ -228,6 +270,9 @@ def samples(rows):
 if __name__ == "__main__":
     import sys
     rows = manifest()
+    if "--trial" in sys.argv:
+        make_trial()
+        raise SystemExit
     if "--no-zip" in sys.argv:
         tw, ni = len(rows), len(rows) * len(FONT_SET) * len(STYLES)
     else:

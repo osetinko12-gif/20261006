@@ -83,19 +83,18 @@ SETS = {
                    "白抜き版は絵の上に置いても下の線が透けません"],
     },
     "seijin": {
-        "ja": "成人向けエフェクト集", "en": "ADULT MANGA EFFECTS", "en_title": "Adult Effects", "unit": "種", "unit_en": "EFFECTS",
-        "zip": "seijin_完成版.zip",
+        "ja": "恋愛・お色気エフェクト集", "en": "LOVE & SEXY EFFECTS", "en_title": "Love Effects", "unit": "種", "unit_en": "EFFECTS",
+        "zip": "love_effect_完成版.zip",
         "cats": {
             "01_heart_fuki": ("ハート吹き出し", "Heart bubbles"), "02_heart_mark": ("ハート記号", "Heart marks"),
             "03_toiki": ("吐息・湯気", "Breath / steam"), "04_shizuku": ("汗・しずく・糸引き", "Sweat / drops"),
             "05_furue": ("震え・ビクビク", "Trembling marks"), "06_haikei": ("背景（ハート集中線など）", "Backgrounds"),
-            "07_shusei": ("修正素材（黒棒・ハート隠し・光）", "Censor shapes"),
         },
         "size_note": "記号・吹き出しは等倍でおよそ10〜40mm。背景は 縦150×220mm／横150×100mm／正方120×120mm。",
         "size_note_en": "Symbols about 10-40 mm; backgrounds 150x220 / 150x100 / 120x120 mm.",
-        "points": ["成人向け漫画の『演出』に使う効果素材（描写そのものは含みません）",
-                   "ハート吹き出し・吐息・汗・しずく・震え線・ハート集中線をまとめて収録",
-                   "修正用の黒棒・ハート隠し・光修正も同梱（修正の程度は販売先の規約・法令に合わせてご判断ください）"],
+        "points": ["ラブシーン・照れ・ドキドキ・お色気シーンの『演出』に使う効果素材",
+                   "ハート吹き出し・ハート記号・吐息・湯気・汗・しずく・震え線・ハート集中線をまとめて収録",
+                   "全年齢の作品にも、成人向けの作品にも使えます"],
     },
 }
 
@@ -213,7 +212,9 @@ def write_manifest(res):
 
 def read_manifest(key):
     with open(os.path.join(OUT, key, "manifest.csv"), encoding="utf-8") as f:
-        return [tuple(r) for r in csv.reader(f)]
+        rows = [tuple(r) for r in csv.reader(f)]
+    cats = SETS[key]["cats"] if key in SETS else None
+    return [r for r in rows if cats is None or r[0] in cats]
 
 
 # ---------------------------------------------------------------- catalog / zip
@@ -343,7 +344,10 @@ def cover(key, total, lang="ja"):
     im = Image.new("RGB", (W, H), INK)
     d = ImageDraw.Draw(im)
     if lang == "ja":
-        text_center(d, W / 2, 70, S["ja"], font(FONT_BLACK, 130), (255, 255, 255), spacing=14)
+        fs = 130
+        while fs > 60 and sum(d.textlength(ch, font=font(FONT_BLACK, fs)) for ch in S["ja"]) + 14 * len(S["ja"]) > W - 140:
+            fs -= 4
+        text_center(d, W / 2, 70 + (130 - fs) * 0.6, S["ja"], font(FONT_BLACK, fs), (255, 255, 255), spacing=14)
         text_center(d, W / 2, 245, S["en"], font(FONT_BOLD, 34), (210, 210, 210), spacing=10)
     else:
         text_center(d, W / 2, 80, S["en_title"].upper(), font(FONT_BLACK, 116), (255, 255, 255), spacing=8)
@@ -519,9 +523,9 @@ SAMPLES = {
         ("ハート吹き出し・ハート記号", ["sj_hfuki_001", "sj_hfuki_003", "sj_hfuki_007", "sj_hfuki_009", "sj_hfuki_012",
                                  "sj_hfuki_015", "sj_hfuki_017", "sj_hfuki_019", "sj_hmark_007", "sj_hmark_011",
                                  "sj_hmark_015", "sj_hmark_017", "sj_hmark_019", "sj_hmark_021", "sj_hmark_023"]),
-        ("吐息・しずく・震え・修正", ["sj_toiki_001", "sj_toiki_003", "sj_toiki_006", "sj_toiki_011", "sj_shizuku_002",
+        ("吐息・しずく・震え", ["sj_toiki_001", "sj_toiki_003", "sj_toiki_006", "sj_toiki_011", "sj_shizuku_002",
                                 "sj_shizuku_007", "sj_shizuku_010", "sj_shizuku_014", "sj_shizuku_018", "sj_shizuku_021",
-                                "sj_furue_003", "sj_furue_008", "sj_shusei_001", "sj_shusei_009", "sj_shusei_012"]),
+                                "sj_furue_003", "sj_furue_008", "sj_hmark_013", "sj_toiki_008", "sj_shizuku_016"]),
         ("背景", ["sj_haikei_001", "sj_haikei_005", "sj_haikei_007", "sj_haikei_008", "sj_haikei_011", "sj_haikei_014"]),
     ],
 }
@@ -634,37 +638,37 @@ def bundle_cover(totals):
     W = H = 1600
     im = Image.new("RGB", (W, H), INK)
     d = ImageDraw.Draw(im)
-    text_center(d, W / 2, 80, "漫画素材セット", font(FONT_BLACK, 130), (255, 255, 255), spacing=12)
-    text_center(d, W / 2, 255, "MANGA ASSET BUNDLE", font(FONT_BOLD, 34), (210, 210, 210), spacing=10)
-    d.rectangle([W / 2 - 170, 320, W / 2 + 170, 326], fill=YELLOW)
-    s = totals["fukidashi"] + totals["kouka"] + totals["manpu"]
-    fn = font(FONT_DELA, 330)
+    text_center(d, W / 2, 70, "漫画素材セット", font(FONT_BLACK, 130), (255, 255, 255), spacing=12)
+    text_center(d, W / 2, 245, "MANGA ASSET BUNDLE", font(FONT_BOLD, 34), (210, 210, 210), spacing=10)
+    d.rectangle([W / 2 - 170, 310, W / 2 + 170, 316], fill=YELLOW)
+    keys = ["fukidashi", "kouka", "manpu", "seijin"]
+    s = sum(totals[k] for k in keys)
+    fn = font(FONT_DELA, 300)
     num = str(s)
     nw = d.textlength(num, font=fn)
     fu = font(FONT_BLACK, 100)
     x0 = W / 2 - (nw + 24 + d.textlength("種", font=fu)) / 2
-    d.text((x0, 340), num, font=fn, fill=YELLOW)
-    d.text((x0 + nw + 24, 640), "種", font=fu, fill=YELLOW)
-    boxes = [("吹き出し集", totals["fukidashi"], "fk_shout_001"), ("効果線集", totals["kouka"], "kk_shuchu_025"),
-             ("漫符集", totals["manpu"], "mp_ikari_002")]
-    bw = 440
-    for i, (ja, n, nm) in enumerate(boxes):
-        x = 90 + i * (bw + 45)
-        y = 860
-        d.rounded_rectangle([x, y, x + bw, y + 500], radius=24, fill=(255, 255, 255))
-        key = {"fk": "fukidashi", "kk": "kouka", "mp": "manpu"}[nm[:2]]
+    d.text((x0, 320), num, font=fn, fill=YELLOW)
+    d.text((x0 + nw + 24, 590), "種", font=fu, fill=YELLOW)
+    boxes = [("吹き出し集", "fukidashi", "fk_shout_001"), ("効果線集", "kouka", "kk_shuchu_025"),
+             ("漫符集", "manpu", "mp_ikari_002"), ("恋愛・お色気", "seijin", "sj_hmark_017")]
+    bw = 340
+    for i, (ja, key, nm) in enumerate(boxes):
+        x = 60 + i * (bw + 33)
+        y = 800
+        d.rounded_rectangle([x, y, x + bw, y + 560], radius=24, fill=(255, 255, 255))
         p = pick(key, [nm])[0]
         if key == "kouka":
             art = render_svg(p, width=bw * 1.3)
-            ox, oy = (art.width - (bw - 40)) // 2, (art.height - 300) // 2
-            art = art.crop((ox, oy, ox + bw - 40, oy + 300))
+            ox, oy = (art.width - (bw - 40)) // 2, (art.height - 330) // 2
+            art = art.crop((ox, oy, ox + bw - 40, oy + 330))
         else:
-            art = fit_render(p, bw - 120, 260)
-        im.paste(art, (int(x + (bw - art.width) / 2), int(y + 30 + (300 - art.height) / 2)), art)
-        text_center(d, x + bw / 2, y + 350, ja, font(FONT_BLACK, 56), INK)
-        text_center(d, x + bw / 2, y + 425, "{}種".format(n), font(FONT_DELA, 44), (200, 150, 0))
+            art = fit_render(p, bw - 100, 290)
+        im.paste(art, (int(x + (bw - art.width) / 2), int(y + 30 + (330 - art.height) / 2)), art)
+        text_center(d, x + bw / 2, y + 390, ja, font(FONT_BLACK, 50), INK)
+        text_center(d, x + bw / 2, y + 465, "{}種".format(totals[key]), font(FONT_DELA, 44), (200, 150, 0))
     d.rectangle([0, H - 150, W, H], fill=YELLOW)
-    text_center(d, W / 2, H - 112, "3点セット　｜　PNG＋SVG両対応　｜　クリスタ対応", font(FONT_BLACK, 54), INK)
+    text_center(d, W / 2, H - 112, "4点セット　｜　PNG＋SVG両対応　｜　クリスタ対応", font(FONT_BLACK, 54), INK)
     out = os.path.join(IMG, "bundle_cover.png")
     im.save(out, optimize=True)
     return out
