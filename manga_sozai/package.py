@@ -35,6 +35,7 @@ SETS = {
             "07_whisper": ("ささやき（点線・破線）", "Whisper (dotted)"), "08_black": ("ベタ（黒）", "Black fill"),
             "09_linked": ("連結（2連・3連）", "Linked"), "10_love": ("恋愛・ハート・ふんわり", "Love / soft"),
             "11_double": ("二重線・回想", "Double line / flashback"), "12_monologue": ("モノローグ", "Monologue"),
+            "13_special": ("特殊・演出（ドロドロ・つらら・爆発二重など）", "Special"),
         },
         "size_note": "等倍で、縦長の楕円がおよそ 26×40mm（B5原稿に置いてちょうどよい大きさ）。線幅0.45mm。",
         "size_note_en": "At 100%, a tall oval is about 26x40 mm (fits a B5 manga page). Line width 0.45 mm.",
@@ -51,7 +52,15 @@ SETS = {
             "05_shogeki": ("衝撃・爆発", "Impact / burst"), "06_tatesen": ("縦線（ガーン・どよーん）", "Gloom lines"),
             "07_hamon": ("波紋・同心円", "Ripples"), "08_ame": ("雨", "Rain"),
             "09_kirakira": ("キラキラ背景", "Sparkle backgrounds"), "10_kakeami": ("カケアミ・斜線", "Cross-hatching"),
+            "11_guruguru": ("ぐるぐる（渦）", "Swirl"), "12_sunburst": ("放射帯（サンバースト）", "Sunburst"),
+            "13_chirashi": ("散らし背景（花・ハート・シャボン玉）", "Scatter backgrounds"),
+            "14_tone": ("網点・グラデ・砂目トーン", "Halftone screens"), "15_inazuma": ("稲妻", "Lightning"),
+            "16_namisen": ("波線（ゆらゆら・寒気）", "Wavy lines"),
         },
+        "parts": [("_1_線・フラッシュ", ["01_shuchu", "02_ryusen", "03_uniflash", "04_betaflash", "05_shogeki",
+                                     "06_tatesen", "07_hamon", "08_ame", "10_kakeami"]),
+                  ("_2_背景・トーン", ["09_kirakira", "11_guruguru", "12_sunburst", "13_chirashi", "14_tone",
+                                    "15_inazuma", "16_namisen"])],
         "size_note": "縦150×220mm（B5の基本枠）／横150×100mm／正方120×120mm の3サイズ。コマに合わせて拡大・切り抜きして使えます。",
         "size_note_en": "Three canvas sizes: 150x220 mm (B5 inner frame), 150x100 mm, 120x120 mm.",
         "points": ["線は1本ずつ『入り抜き』のある手描き風の形",
@@ -65,13 +74,28 @@ SETS = {
             "01_ase": ("汗・涙", "Sweat / tears"), "02_ikari": ("怒り", "Anger"),
             "03_odoroki": ("驚き・ショック・！？", "Surprise / shock"), "04_konran": ("混乱・眠り・ため息", "Dizzy / sleep / sigh"),
             "05_hirameki": ("ひらめき・音符", "Idea / music"), "06_kira": ("キラキラ・星・花", "Sparkles / stars / flowers"),
-            "07_heart": ("ハート・照れ", "Hearts / blush"),
+            "07_heart": ("ハート・照れ", "Hearts / blush"), "08_sonota": ("その他（天使の輪・湯気・雨雲など）", "Misc"),
         },
         "size_note": "等倍でおよそ10〜30mm。キャラの頭や顔のまわりにそのまま置けるサイズ。",
         "size_note_en": "About 10-30 mm at 100%, ready to place around a character's head.",
         "points": ["多くの記号を『線画（白抜き）』と『ベタ（黒塗り）』の2種類で収録",
                    "汗・怒りマーク・！？・ハート・Zzz・キラキラなど定番を網羅",
                    "白抜き版は絵の上に置いても下の線が透けません"],
+    },
+    "seijin": {
+        "ja": "成人向けエフェクト集", "en": "ADULT MANGA EFFECTS", "en_title": "Adult Effects", "unit": "種", "unit_en": "EFFECTS",
+        "zip": "seijin_完成版.zip",
+        "cats": {
+            "01_heart_fuki": ("ハート吹き出し", "Heart bubbles"), "02_heart_mark": ("ハート記号", "Heart marks"),
+            "03_toiki": ("吐息・湯気", "Breath / steam"), "04_shizuku": ("汗・しずく・糸引き", "Sweat / drops"),
+            "05_furue": ("震え・ビクビク", "Trembling marks"), "06_haikei": ("背景（ハート集中線など）", "Backgrounds"),
+            "07_shusei": ("修正素材（黒棒・ハート隠し・光）", "Censor shapes"),
+        },
+        "size_note": "記号・吹き出しは等倍でおよそ10〜40mm。背景は 縦150×220mm／横150×100mm／正方120×120mm。",
+        "size_note_en": "Symbols about 10-40 mm; backgrounds 150x220 / 150x100 / 120x120 mm.",
+        "points": ["成人向け漫画の『演出』に使う効果素材（描写そのものは含みません）",
+                   "ハート吹き出し・吐息・汗・しずく・震え線・ハート集中線をまとめて収録",
+                   "修正用の黒棒・ハート隠し・光修正も同梱（修正の程度は販売先の規約・法令に合わせてご判断ください）"],
     },
 }
 
@@ -162,9 +186,9 @@ def to_la(src, dst):
 # ---------------------------------------------------------------- build
 def build_all():
     sys.path.insert(0, HERE)
-    import fukidashi, kouka, manpu
+    import fukidashi, kouka, manpu, seijin
     res = {}
-    for key, mod in [("fukidashi", fukidashi), ("kouka", kouka), ("manpu", manpu)]:
+    for key, mod in [("fukidashi", fukidashi), ("kouka", kouka), ("manpu", manpu), ("seijin", seijin)]:
         out_dir = os.path.join(OUT, key)
         if os.path.isdir(out_dir):
             shutil.rmtree(out_dir)
@@ -248,6 +272,10 @@ def make_zip(key):
     for c in cats:
         n = sum(1 for r in rows if r[0] == c)
         lines.append("  {:<14} {}（{}種）".format(c, S["cats"][c][0], n))
+    if S.get("parts"):
+        lines += ["", "■ ファイルサイズが大きいため、zipを{}つに分けています（どちらも同じ説明書つき）".format(len(S["parts"]))]
+        for suffix, pcats in S["parts"]:
+            lines.append("  {} … {}".format(S["zip"].replace(".zip", suffix + ".zip"), "・".join(S["cats"][c][0].split("（")[0] for c in pcats)))
     lines += ["", "■ ファイルの中身は『ファイル一覧.csv』（Excel・Numbers・Googleスプレッドシートで開けます）にも書いてあります。"]
     with open(os.path.join(stage, "README_フォルダ対応表.txt"), "w", encoding="utf-8-sig") as f:
         f.write("\n".join(lines) + "\n")
@@ -270,19 +298,27 @@ def make_zip(key):
     with open(os.path.join(stage, "商品説明.txt"), "w", encoding="utf-8-sig") as f:
         f.write("\n".join(desc))
 
-    zpath = os.path.join(DIST, S["zip"])
-    if os.path.exists(zpath):
-        os.remove(zpath)
-    root = S["zip"].replace(".zip", "")
-    with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
-        for dp, dn, fn in os.walk(stage):
-            dn.sort()
-            for f in sorted(fn):
-                full = os.path.join(dp, f)
-                arc = os.path.join(root, os.path.relpath(full, stage))
-                z.write(full, arc)
+    parts = S.get("parts") or [("", cats)]
+    for suffix, pcats in parts:
+        zname = S["zip"].replace(".zip", suffix + ".zip")
+        zpath = os.path.join(DIST, zname)
+        if os.path.exists(zpath):
+            os.remove(zpath)
+        root = zname.replace(".zip", "")
+        with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+            for dp, dn, fn in os.walk(stage):
+                dn.sort()
+                for f in sorted(fn):
+                    full = os.path.join(dp, f)
+                    rel = os.path.relpath(full, stage)
+                    top = rel.split(os.sep)[0]
+                    if top in ("PNG", "SVG") and rel.split(os.sep)[1] not in pcats:
+                        continue
+                    if top == "一覧表" and f[:-4] not in pcats:
+                        continue
+                    z.write(full, os.path.join(root, rel))
+        print("zip", zpath, os.path.getsize(zpath) // 1024 // 1024, "MB")
     shutil.rmtree(stage)
-    print("zip", zpath, os.path.getsize(zpath) // 1024 // 1024, "MB")
     return total
 
 
@@ -297,6 +333,7 @@ COVER_PICKS = {
     "kouka": ["kk_shuchu_025", "kk_beta_001", "kk_shuchu_010", "kk_shogeki_002", "kk_uni_011"],
     "manpu": ["mp_ase_002", "mp_ikari_002", "mp_odoroki_018", "mp_heart_002", "mp_kira_006", "mp_konran_006",
               "mp_hirameki_007", "mp_ase_008"],
+    "seijin": ["sj_hfuki_007", "sj_hmark_002", "sj_toiki_003", "sj_hmark_017", "sj_shizuku_008", "sj_hfuki_016"],
 }
 
 
@@ -342,7 +379,7 @@ def cover(key, total, lang="ja"):
         cell = (W - 120) / n
         for i, p in enumerate(picks):
             art = fit_render(p, cell - 24, band_h - 40)
-            if key == "manpu":
+            if key in ("manpu", "seijin"):
                 # 黒地で見えるよう白いフチをつける
                 bg = Image.new("RGBA", (art.width + 24, art.height + 24), (0, 0, 0, 0))
                 a = art.split()[3].point(lambda v: 255 if v > 10 else 0)
@@ -455,12 +492,17 @@ SAMPLES = {
         ("ベタ・連結・恋愛・ささやき", ["fk_black_002", "fk_black_004", "fk_black_005", "fk_black_010",
                                 "fk_linked_001", "fk_linked_010", "fk_love_001", "fk_love_008",
                                 "fk_whisper_004", "fk_whisper_013", "fk_double_002", "fk_elec_002"]),
+        ("特殊・演出（新規追加）", ["fk_special_001", "fk_special_002", "fk_special_003", "fk_special_007",
+                              "fk_special_010", "fk_special_012", "fk_special_014", "fk_special_016",
+                              "fk_special_017", "fk_special_018", "fk_special_024", "fk_special_027"]),
     ],
     "kouka": [
         ("集中線・ベタ集中線", ["kk_shuchu_001", "kk_shuchu_005", "kk_shuchu_010", "kk_shuchu_025",
                            "kk_shuchu_013", "kk_shuchu_016", "kk_shuchu_019", "kk_shuchu_022"]),
         ("フラッシュ・流線・縦線", ["kk_uni_001", "kk_beta_002", "kk_shogeki_004", "kk_ryusen_001",
                               "kk_ryusen_011", "kk_tatesen_001", "kk_hamon_001", "kk_kake_005"]),
+        ("背景・トーン（新規追加）", ["kk_guru_001", "kk_sun_001", "kk_chirashi_001", "kk_chirashi_004", "kk_tone_003",
+                                "kk_tone_006", "kk_inazuma_003", "kk_nami_001"]),
     ],
     "manpu": [
         ("汗・怒り・驚き", ["mp_ase_001", "mp_ase_002", "mp_ase_008", "mp_ase_013", "mp_ase_021",
@@ -469,6 +511,18 @@ SAMPLES = {
         ("キラキラ・ハート・ねむり", ["mp_kira_002", "mp_kira_005", "mp_kira_010", "mp_kira_015", "mp_kira_018",
                                 "mp_heart_002", "mp_heart_005", "mp_heart_008", "mp_heart_011", "mp_heart_013",
                                 "mp_konran_001", "mp_konran_003", "mp_konran_006", "mp_hirameki_001", "mp_hirameki_007"]),
+        ("その他（新規追加）", ["mp_sonota_001", "mp_sonota_003", "mp_sonota_006", "mp_sonota_007", "mp_sonota_010",
+                          "mp_sonota_012", "mp_sonota_013", "mp_sonota_018", "mp_sonota_020", "mp_sonota_021",
+                          "mp_sonota_023", "mp_sonota_026", "mp_sonota_027", "mp_sonota_028", "mp_sonota_029"]),
+    ],
+    "seijin": [
+        ("ハート吹き出し・ハート記号", ["sj_hfuki_001", "sj_hfuki_003", "sj_hfuki_007", "sj_hfuki_009", "sj_hfuki_012",
+                                 "sj_hfuki_015", "sj_hfuki_017", "sj_hfuki_019", "sj_hmark_007", "sj_hmark_011",
+                                 "sj_hmark_015", "sj_hmark_017", "sj_hmark_019", "sj_hmark_021", "sj_hmark_023"]),
+        ("吐息・しずく・震え・修正", ["sj_toiki_001", "sj_toiki_003", "sj_toiki_006", "sj_toiki_011", "sj_shizuku_002",
+                                "sj_shizuku_007", "sj_shizuku_010", "sj_shizuku_014", "sj_shizuku_018", "sj_shizuku_021",
+                                "sj_furue_003", "sj_furue_008", "sj_shusei_001", "sj_shusei_009", "sj_shusei_012"]),
+        ("背景", ["sj_haikei_001", "sj_haikei_005", "sj_haikei_007", "sj_haikei_008", "sj_haikei_011", "sj_haikei_014"]),
     ],
 }
 
@@ -489,56 +543,81 @@ def usage_page():
     xm = x0 + (x1 - x0) * 0.55
     panels = [(x0, y0, x1, mid), (x0, mid + g, xm, mid2), (xm + g, mid + g, x1, mid2), (x0, mid2 + g, x1, y1)]
 
+    import json
+    with open(os.path.join(OUT, "fukidashi", "anchors.json"), encoding="utf-8") as f:
+        anchors = json.load(f)
+
     def put(svg_key, name, box, scale=1.0, at=None, flip=False):
+        """素材を置く. 吹き出しは『本体の中心』が at に来るように置き、その座標を返す."""
         p = pick(svg_key, [name])[0]
         art = render_svg(p, dpi=dpi * scale)
         if flip:
             art = art.transpose(Image.FLIP_LEFT_RIGHT)
         bx0, by0, bx1, by1 = [int(v) for v in box]
-        if at is None:
-            cx, cy = (bx0 + bx1) / 2, (by0 + by1) / 2
+        cx, cy = ((bx0 + bx1) / 2, (by0 + by1) / 2) if at is None else at
+        k = dpi * scale / 25.4
+        if name in anchors:
+            ax, ay = anchors[name][0] * k, anchors[name][1] * k
+            if flip:
+                ax = art.width - ax
         else:
-            cx, cy = at
+            ax, ay = art.width / 2, art.height / 2
         layer = Image.new("RGBA", page.size, (0, 0, 0, 0))
-        layer.alpha_composite(art, (int(cx - art.width / 2), int(cy - art.height / 2)))
+        layer.alpha_composite(art, (int(round(cx - ax)), int(round(cy - ay))))
         mask = Image.new("L", page.size, 0)
         ImageDraw.Draw(mask).rectangle([bx0, by0, bx1, by1], fill=255)
         layer.putalpha(Image.composite(layer.split()[3], Image.new("L", page.size, 0), mask))
         page.alpha_composite(layer)
+        return cx, cy
 
-    def vtext(cx, cy, s, size):
+    def vtext(center, s, size):
+        """縦書き. 1文字ずつマスの中心に置く. !? !! は横に並べて1マス（縦中横）."""
+        cx, cy = center
         f = font(FONT_BOLD, int(size))
-        n = len(s)
-        y = cy - n * size * 1.05 / 2
-        for ch in s:
-            w = d.textlength(ch, font=f)
-            if ch in "ー…":
-                ch_img = Image.new("RGBA", (int(size * 1.4), int(size * 1.4)), (0, 0, 0, 0))
-                ImageDraw.Draw(ch_img).text((size * 0.2, 0), ch, font=f, fill=(0, 0, 0))
-                ch_img = ch_img.rotate(-90, expand=True)
-                page.alpha_composite(ch_img, (int(cx - ch_img.width / 2), int(y)))
+        toks = []
+        i = 0
+        while i < len(s):
+            if s[i] in "!?！？" and i + 1 < len(s) and s[i + 1] in "!?！？":
+                toks.append(s[i:i + 2])
+                i += 2
             else:
-                d.text((cx - w / 2, y), ch, font=f, fill=(0, 0, 0))
-            y += size * 1.05
+                toks.append(s[i])
+                i += 1
+        step = size * 1.08
+        y = cy - step * len(toks) / 2 + step / 2
+        for t in toks:
+            if t in "ー…―〜":
+                im_ = Image.new("RGBA", (int(size * 2), int(size * 2)), (0, 0, 0, 0))
+                ImageDraw.Draw(im_).text((size, size), t, font=f, fill=(0, 0, 0), anchor="mm")
+                im_ = im_.rotate(-90)
+                page.alpha_composite(im_, (int(cx - size), int(y - size)))
+            elif t in "っゃゅょぁぃぅぇぉッャュョァィゥェォ":
+                d.text((cx + size * 0.12, y - size * 0.1), t, font=f, fill=(0, 0, 0), anchor="mm")
+            elif t in "、。":
+                d.text((cx + size * 0.3, y - size * 0.3), t, font=f, fill=(0, 0, 0), anchor="mm")
+            elif len(t) == 2:
+                f2 = font(FONT_BOLD, int(size * 0.8))
+                d.text((cx, y), t, font=f2, fill=(0, 0, 0), anchor="mm")
+            else:
+                d.text((cx, y), t, font=f, fill=(0, 0, 0), anchor="mm")
+            y += step
+
+    def rel(p, fx, fy):
+        return (p[0] + (p[2] - p[0]) * fx, p[1] + (p[3] - p[1]) * fy)
 
     p1, p2, p3, p4 = panels
-    put("kouka", "kk_shuchu_013", p1, at=((p1[0] + p1[2]) / 2, (p1[1] + p1[3]) / 2), scale=1.0)
-    put("fukidashi", "fk_shout_001", p1, at=(p1[0] + (p1[2] - p1[0]) * 0.5, (p1[1] + p1[3]) / 2), scale=1.15)
-    vtext(p1[0] + (p1[2] - p1[0]) * 0.5, (p1[1] + p1[3]) / 2, "なんだと!?", 7.2 * mm)
+    put("kouka", "kk_shuchu_013", p1, scale=1.0)
+    vtext(put("fukidashi", "fk_shout_001", p1, at=rel(p1, 0.5, 0.5), scale=1.15), "なんだと!?", 6.6 * mm)
     put("kouka", "kk_ryusen_001", p2, scale=1.0)
-    put("fukidashi", "fk_normal_003", p2, at=(p2[0] + (p2[2] - p2[0]) * 0.36, p2[1] + (p2[3] - p2[1]) * 0.42))
-    vtext(p2[0] + (p2[2] - p2[0]) * 0.36, p2[1] + (p2[3] - p2[1]) * 0.40, "待って", 5 * mm)
-    put("manpu", "mp_ase_007", p2, at=(p2[0] + (p2[2] - p2[0]) * 0.78, p2[1] + (p2[3] - p2[1]) * 0.3), scale=1.1)
+    vtext(put("fukidashi", "fk_normal_003", p2, at=rel(p2, 0.36, 0.42)), "待って", 5 * mm)
+    put("manpu", "mp_ase_007", p2, at=rel(p2, 0.78, 0.3), scale=1.1)
     put("kouka", "kk_kira_001", p3, scale=1.0)
-    put("fukidashi", "fk_love_008", p3, at=(p3[0] + (p3[2] - p3[0]) * 0.5, p3[1] + (p3[3] - p3[1]) * 0.45), scale=0.95)
-    vtext(p3[0] + (p3[2] - p3[0]) * 0.5, p3[1] + (p3[3] - p3[1]) * 0.43, "好き…", 5 * mm)
-    put("manpu", "mp_heart_007", p3, at=(p3[0] + (p3[2] - p3[0]) * 0.82, p3[1] + (p3[3] - p3[1]) * 0.2))
+    vtext(put("fukidashi", "fk_love_008", p3, at=rel(p3, 0.5, 0.45), scale=0.95), "好き…", 5 * mm)
+    put("manpu", "mp_heart_007", p3, at=rel(p3, 0.82, 0.2))
     put("kouka", "kk_tatesen_007", p4, at=((p4[0] + p4[2]) / 2, p4[1] + 70 * mm), scale=1.0)
-    put("fukidashi", "fk_thought_002", p4, at=(p4[0] + (p4[2] - p4[0]) * 0.72, p4[1] + (p4[3] - p4[1]) * 0.42))
-    vtext(p4[0] + (p4[2] - p4[0]) * 0.73, p4[1] + (p4[3] - p4[1]) * 0.39, "どうしよう", 4.6 * mm)
-    put("fukidashi", "fk_shaky_006", p4, at=(p4[0] + (p4[2] - p4[0]) * 0.28, p4[1] + (p4[3] - p4[1]) * 0.52), scale=0.9)
-    vtext(p4[0] + (p4[2] - p4[0]) * 0.28, p4[1] + (p4[3] - p4[1]) * 0.50, "うそ…", 4.6 * mm)
-    put("manpu", "mp_odoroki_019", p4, at=(p4[0] + (p4[2] - p4[0]) * 0.5, p4[1] + (p4[3] - p4[1]) * 0.25), scale=1.3)
+    vtext(put("fukidashi", "fk_thought_002", p4, at=rel(p4, 0.72, 0.42)), "どうしよう", 4.6 * mm)
+    vtext(put("fukidashi", "fk_shaky_006", p4, at=rel(p4, 0.28, 0.5), scale=0.9), "うそ…", 4.6 * mm)
+    put("manpu", "mp_odoroki_019", p4, at=rel(p4, 0.5, 0.25), scale=1.3)
     for (a, b, c, e) in panels:
         d.rectangle([a, b, c, e], outline=(0, 0, 0), width=lw)
     # 外側の白い帯にラベル
@@ -558,7 +637,7 @@ def bundle_cover(totals):
     text_center(d, W / 2, 80, "漫画素材セット", font(FONT_BLACK, 130), (255, 255, 255), spacing=12)
     text_center(d, W / 2, 255, "MANGA ASSET BUNDLE", font(FONT_BOLD, 34), (210, 210, 210), spacing=10)
     d.rectangle([W / 2 - 170, 320, W / 2 + 170, 326], fill=YELLOW)
-    s = sum(totals.values())
+    s = totals["fukidashi"] + totals["kouka"] + totals["manpu"]
     fn = font(FONT_DELA, 330)
     num = str(s)
     nw = d.textlength(num, font=fn)
@@ -608,8 +687,8 @@ def main():
         overview(key, totals[key])
         for k, (title, names) in enumerate(SAMPLES[key]):
             sample_sheet(key, title, names, "{}_sample_{}.png".format(key, k + 2), SAMPLE_COLORS[k % 4],
-                         cols=4 if key == "kouka" else (5 if key == "manpu" else 4),
-                         crop_panels=(key == "kouka"))
+                         cols=4 if key == "kouka" else (5 if key in ("manpu", "seijin") and len(names) > 8 else 4),
+                         crop_panels=(key == "kouka" or names[0].startswith("sj_haikei")))
         print("images", key)
     bundle_cover(totals)
     usage_page()

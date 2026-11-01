@@ -471,6 +471,91 @@ def build():
     # ハート目（目の上に乗せる）
     both(cat, "mp_heart", "ハート目_ペア", unary_union([heart(8, 0, 0), heart(8, 16, 0)]))
 
+    # 08 その他
+    cat = "08_sonota"
+    # 天使の輪
+    halo = ellipse(9, 2.6).difference(ellipse(6.6, 1.4))
+    both(cat, "mp_sonota", "天使の輪", halo)
+    # ゾクッ（寒気の波線）
+    for n, ja in [(3, "3本"), (5, "5本")]:
+        parts = []
+        for k in range(n):
+            pts = [(k * 2.6 + 0.7 * math.sin(t * 2 * math.pi * 2.5), t * 14) for t in [i / 60 for i in range(61)]]
+            parts.append(tapered_curve(pts, 0.6, 0.3, 0.3))
+        mk(cat, "mp_sonota", "ゾクッ_寒気_" + ja).solid(unary_union(parts))
+    # ビクッ（肩のまわりの短い線）
+    parts = []
+    for side in [-1, 1]:
+        for k, (ang, L) in enumerate([(-35, 5), (-10, 6), (15, 5)]):
+            a = math.radians(ang)
+            x0 = side * 12
+            p0 = (x0 + side * 1.5 * math.cos(a), 1.5 * math.sin(a))
+            p1 = (x0 + side * (1.5 + L) * math.cos(a), (1.5 + L) * math.sin(a))
+            parts.append(tapered(p1, p0, 0.9, 0.0))
+    mk(cat, "mp_sonota", "ビクッ_左右").solid(unary_union(parts))
+    # ドキッ（トゲの中のハート）
+    from fukidashi import body_spiky
+    sp = body_spiky(9, 9, 12, 0.3, rng("doki"), irregular=0.3)
+    mk(cat, "mp_sonota", "ドキッ_トゲハート_線画").line(sp).solid(heart(7))
+    mk(cat, "mp_sonota", "ドキッ_トゲハート_ベタ").solid(sp.difference(heart(7.8))).solid(heart(6.2))
+    # ほかほか湯気
+    for n, ja in [(3, "3本"), (2, "2本")]:
+        parts = []
+        for k in range(n):
+            pts = [(k * 4.5 + 1.2 * math.sin(t * 2 * math.pi * 1.3 + k), -t * 13) for t in [i / 50 for i in range(51)]]
+            parts.append(tapered_curve(pts, 0.9, 0.25, 0.5))
+        mk(cat, "mp_sonota", "湯気_ほかほか_" + ja).solid(unary_union(parts))
+    # ズキュン（矢が刺さったハート）
+    hh = heart(13)
+    arrow = unary_union([LineString([(-12, 7), (12, -7)]).buffer(0.45),
+                         Polygon([(12, -7), (8.2, -7.3), (10.3, -3.9)]).buffer(0),
+                         Polygon([(-12, 7), (-14.5, 6.0), (-13.6, 8.6)]).buffer(0),
+                         Polygon([(-11, 6.4), (-13.5, 5.4), (-12.6, 8.0)]).buffer(0)])
+    mk(cat, "mp_sonota", "ズキュン_矢ハート_線画").line(hh).solid(arrow.difference(hh.buffer(-0.01)).union(arrow.intersection(hh).difference(hh.buffer(-6))))
+    mk(cat, "mp_sonota", "ズキュン_矢ハート_ベタ").solid(hh).solid(arrow.difference(hh))
+    # ぷしゅー（頭から出る煙）
+    puffs = [body_cloud(3.8, 3, 6, 1.5, rng("pshu", i), 0.2) for i in range(3)]
+    puffs = [affinity.translate(p, dx, dy) for p, (dx, dy) in zip(puffs, [(0, 0), (5, -7), (-3, -13)])]
+    it = mk(cat, "mp_sonota", "ぷしゅー_煙_線画")
+    for p in puffs:
+        it.line(p)
+    mk(cat, "mp_sonota", "ぷしゅー_煙_ベタ").solid(unary_union(puffs))
+    # 三点リーダ
+    mk(cat, "mp_sonota", "三点リーダ_横").solid(unary_union([Point(i * 4, 0).buffer(0.9) for i in range(3)]))
+    mk(cat, "mp_sonota", "三点リーダ_縦").solid(unary_union([Point(0, i * 4).buffer(0.9) for i in range(3)]))
+    # ビックリ3つ
+    both(cat, "mp_sonota", "ビックリ3つ", unary_union([exclam(15, cx=0, slant=-0.15), exclam(15, cx=6, slant=-0.15), exclam(15, cx=12, slant=-0.15)]))
+    # 怒りマーク散らし
+    g = unary_union([anger(10), affinity.translate(anger(7, rot=20), 11, -7), affinity.translate(anger(6, rot=-15), -9, -8),
+                     affinity.translate(anger(5, rot=30), 9, 8)])
+    both(cat, "mp_sonota", "怒りマーク散らし", g)
+    # 雨雲（どんより）
+    cloud = body_cloud(9, 4.5, 9, 2.6, rng("rainc"), 0.25)
+    rain = unary_union([tapered((x, 7), (x - 1.2, 13 + (x % 3)), 0.6, 0.0) for x in (-6, -3, 0, 3, 6)])
+    mk(cat, "mp_sonota", "雨雲_どんより_線画").line(cloud).solid(rain)
+    mk(cat, "mp_sonota", "雨雲_どんより_ベタ").solid(cloud).solid(rain)
+    # 晴れ（太陽）
+    sun = Point(0, 0).buffer(4.5, quad_segs=32)
+    mk(cat, "mp_sonota", "太陽_線画").line(sun).solid(rays(6.2, 10, 12, 1.0, 0, 330))
+    # 汗しぶき（大）
+    r = rng("splash")
+    parts = []
+    for k in range(9):
+        a = math.radians(-170 + 160 * k / 8 + r.uniform(-6, 6))
+        d = r.uniform(8, 13)
+        parts.append(drop(r.uniform(3, 5.5), d * math.cos(a), d * math.sin(a), math.degrees(a) - 90))
+    both(cat, "mp_sonota", "汗しぶき_大", unary_union(parts))
+    # 十字キラ（丸つき）
+    g = unary_union([sparkle(8, thin=0.1), Point(0, 0).buffer(1.6)])
+    mk(cat, "mp_sonota", "十字キラ_光点").solid(g)
+    g = unary_union([sparkle(8, thin=0.1), sparkle(5, thin=0.1, rot=math.pi / 4), Point(0, 0).buffer(1.4)])
+    mk(cat, "mp_sonota", "キラッ_八方光").solid(g)
+    # 冷や汗の縦線（ほほ）
+    mk(cat, "mp_sonota", "冷や汗_縦線").solid(unary_union([tapered((i * 1.5, 0), (i * 1.5, 7 + (i % 2) * 2), 0.5, 0.0, round_tip=False) for i in range(4)]))
+    # 汗ぽたぽた（しずく＋落ちる跡）
+    g = unary_union([drop(8), drop(5, 0, 11), drop(3, 0, 18)])
+    both(cat, "mp_sonota", "汗ぽたぽた", g)
+
     for it in ITEMS:
         it.path = it.save()
     return ITEMS

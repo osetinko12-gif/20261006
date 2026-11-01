@@ -10,7 +10,8 @@ from collections import Counter
 from shapely.geometry import LineString, Point, Polygon
 from shapely.ops import unary_union
 
-from sozai import (BLACK, WHITE, Canvas, clip_rect, ellipse, rng, sparkle, tapered, tapered_curve)
+from sozai import (BLACK, WHITE, Canvas, clip_rect, ellipse, heart, rng, sparkle, tapered, tapered_curve,
+                   wedge_along)
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", "kouka")
 SIZES = {"tate": (150, 220, "縦"), "yoko": (150, 100, "横"), "sq": (120, 120, "正方")}
@@ -32,7 +33,10 @@ class FX:
         cv = Canvas(self.w, self.h)
         box = clip_rect(self.w, self.h)
         for g, c in self.layers:
-            cv.add(g.intersection(box), c)
+            if isinstance(g, str):  # 生のSVGパス（網点など数が多いもの）
+                cv.raw('<path fill="{}" d="{}"/>'.format(c, g))
+            else:
+                cv.add(g.intersection(box), c)
         base = os.path.join(OUT, self.cat, self.name)
         cv.save(base)
         return base + ".svg"
@@ -262,6 +266,121 @@ def poisson(w, h, mind, r, margin=4, k=30):
     return pts
 
 
+def dot_tone(w, h, frac, lpi=60, ang=45, r_jit=None):
+    """網点トーン. frac(x,y) は 0..1 の濃度（面積率）. 円をSVGの弧で直接書く."""
+    p = 25.4 / lpi
+    a = math.radians(ang)
+    ca, sa = math.cos(a), math.sin(a)
+    D = math.hypot(w, h)
+    n = int(D / p) + 2
+    out = []
+    for i in range(-n, n):
+        for j in range(-n, n):
+            x = w / 2 + (i * ca - j * sa) * p
+            y = h / 2 + (i * sa + j * ca) * p
+            if x < -p or y < -p or x > w + p or y > h + p:
+                continue
+            f = frac(min(max(x, 0), w), min(max(y, 0), h))
+            if f <= 0.004:
+                continue
+            r = p * math.sqrt(min(f, 0.78) / math.pi)
+            out.append("M{:.3f} {:.3f}m-{r:.3f} 0a{r:.3f} {r:.3f} 0 1 0 {d:.3f} 0a{r:.3f} {r:.3f} 0 1 0 -{d:.3f} 0".format(
+                x, y, r=r, d=2 * r))
+    return "".join(out)
+
+
+def sand_tone(w, h, density, rad, r, frac=None):
+    """砂目トーン（ランダムな細かい点）."""
+    out = []
+    n = int(w * h * density)
+    for _ in range(n):
+        x, y = r.uniform(0, w), r.uniform(0, h)
+        if frac and r.random() > frac(x, y):
+            continue
+        rr = rad * r.uniform(0.7, 1.2)
+        out.append("M{:.2f} {:.2f}m-{r:.3f} 0a{r:.3f} {r:.3f} 0 1 0 {d:.3f} 0a{r:.3f} {r:.3f} 0 1 0 -{d:.3f} 0".format(
+            x, y, r=rr, d=2 * rr))
+    return "".join(out)
+
+
+def swirl(w, h, arms, wmax, r, tight=2.2):
+    """ぐるぐる背景（中心から渦を巻く線）."""
+    cx, cy = w / 2, h / 2
+    R = math.hypot(w, h) * 0.6
+    parts = []
+    for k in range(arms):
+        a0 = 2 * math.pi * k / arms + r.uniform(-0.05, 0.05)
+        pts = []
+        for i in range(200):
+            t = i / 199
+            rad = 4 + R * t
+            a = a0 + tight * math.log(1 + 6 * t)
+            pts.append((cx + rad * math.cos(a), cy + rad * math.sin(a)))
+        parts.append(tapered_curve(pts, wmax * r.uniform(0.6, 1.0), 0.6, 0.02))
+    return unary_union(parts)
+
+
+def sunburst(w, h, k, cx=None, cy=None, hole=0.0):
+    """放射状の太い帯（サンバースト）."""
+    cx = w / 2 if cx is None else cx
+    cy = h / 2 if cy is None else cy
+    R = math.hypot(w, h) * 1.2
+    parts = []
+    for i in range(k):
+        a0 = 2 * math.pi * i / k
+        a1 = a0 + math.pi / k
+        parts.append(Polygon([(cx, cy), (cx + R * math.cos(a0), cy + R * math.sin(a0)),
+                              (cx + R * math.cos(a1), cy + R * math.sin(a1))]))
+    g = unary_union(parts)
+    if hole:
+        g = g.difference(Point(cx, cy).buffer(hole, quad_segs=48))
+    return g
+
+
+def scatter(w, h, mind, maker, r):
+    return unary_union([maker(x, y, r) for (x, y) in poisson(w, h, mind, r, margin=-2)])
+
+
+def lightning(p0, p1, w0, r, depth=0):
+    """稲妻（枝分かれあり）."""
+    segs = 9
+    pts = [p0]
+    dx, dy = p1[0] - p0[0], p1[1] - p0[1]
+    L = math.hypot(dx, dy)
+    nx, ny = -dy / L, dx / L
+    for i in range(1, segs):
+        t = i / segs
+        o = r.uniform(-1, 1) * L * 0.09
+        pts.append((p0[0] + dx * t + nx * o, p0[1] + dy * t + ny * o))
+    pts.append(p1)
+    parts = [wedge_along(pts, w0, 0.0, 0.8)]
+    if depth < 1:
+        for j in (3, 6):
+            if r.random() < 0.8:
+                q = pts[j]
+                ang = math.atan2(dy, dx) + r.choice([-1, 1]) * r.uniform(0.4, 0.8)
+                q1 = (q[0] + L * 0.3 * math.cos(ang), q[1] + L * 0.3 * math.sin(ang))
+                parts.append(lightning(q, q1, w0 * 0.5, r, depth + 1))
+    return unary_union(parts)
+
+
+def wavy_lines(w, h, n, amp, wl, lw, r, vertical=False):
+    parts = []
+    for i in range(n):
+        o = (i + 0.5) * (w if vertical else h) / n + r.uniform(-0.2, 0.2) * (h / n)
+        ph = r.uniform(0, 2 * math.pi)
+        L = h if vertical else w
+        s0 = r.uniform(-0.1, 0.3) * L
+        s1 = s0 + r.uniform(0.5, 0.9) * L
+        pts = []
+        for k in range(160):
+            s = s0 + (s1 - s0) * k / 159
+            d = amp * math.sin(2 * math.pi * s / wl + ph)
+            pts.append((o + d, s) if vertical else (s, o + d))
+        parts.append(tapered_curve(pts, lw * r.uniform(0.7, 1.0), 0.3, 0.3))
+    return unary_union(parts)
+
+
 # ---------------------------------------------------------------- catalog
 def build():
     # 01 集中線
@@ -400,6 +519,93 @@ def build():
                                                     (3.2, 0.55, 0.14, 3, "カケアミ_3重_濃"), (4.5, 0.8, 0.2, 2, "カケアミ_粗め")]):
         r = rng("kake", si)
         item(cat, "kk_kake", ja, "sq").add(kakeami(120, 120, cell, sp, lw, layers, r))
+
+    # 01 追加: 中心がコマの外（斜めから迫る集中線）
+    cat = "01_shuchu"
+    for si, (fx, fy, ja) in enumerate([(-0.15, -0.1, "左上から"), (1.15, -0.1, "右上から"), (0.5, 1.2, "下から")]):
+        for sk in ["tate", "yoko"]:
+            w, h, _ = SIZES[sk]
+            r = rng("focusEdge", si, sk)
+            g = focus_lines(w, h, w * fx, h * fy, 0.35 * min(w, h), 0.35 * min(w, h), 300, 0.55, 0.9, r)
+            item(cat, "kk_shuchu", "集中線_中心が外_" + ja, sk).add(g)
+
+    # 11 ぐるぐる
+    cat = "11_guruguru"
+    for si, (arms, wm, tight, ja) in enumerate([(36, 1.0, 2.0, "標準"), (70, 0.6, 2.6, "細かい"), (18, 1.8, 1.6, "太い")]):
+        for sk in ["tate", "sq"]:
+            w, h, _ = SIZES[sk]
+            item(cat, "kk_guru", "ぐるぐる_" + ja, sk).add(swirl(w, h, arms, wm, rng("swirl", si, sk), tight))
+
+    # 12 サンバースト
+    cat = "12_sunburst"
+    for k, ja in [(16, "太帯16"), (28, "細帯28")]:
+        for sk in ["tate", "yoko", "sq"]:
+            w, h, _ = SIZES[sk]
+            item(cat, "kk_sun", "放射帯_" + ja, sk).add(sunburst(w, h, k))
+        w, h, _ = SIZES["sq"]
+        item(cat, "kk_sun", "放射帯_{}_中心抜き".format(ja), "sq").add(sunburst(w, h, k, hole=22))
+    w, h, _ = SIZES["yoko"]
+    item(cat, "kk_sun", "放射帯_下から", "yoko").add(sunburst(w, h, 20, cy=h * 1.05))
+
+    # 13 散らし背景（花・ハート・シャボン玉）
+    cat = "13_chirashi"
+    from manpu import flower as _flower
+    from sozai import outline_ring as _ring
+
+    def mk_flower(x, y, r):
+        f = _flower(r.uniform(3, 7), r.choice([5, 5, 6]), x, y)
+        c = Point(x, y).buffer(f.bounds[2] - x - (f.bounds[2] - f.bounds[0]) * 0.36)
+        return unary_union([_ring(f, 0.35), _ring(c, 0.3)])
+
+    def mk_heart(x, y, r):
+        hh = heart(r.uniform(3, 8), x, y)
+        return hh if r.random() < 0.35 else _ring(hh, 0.35)
+
+    def mk_bubble(x, y, r):
+        rad = r.uniform(1.5, 6)
+        c = _ring(Point(x, y).buffer(rad, quad_segs=32), 0.3)
+        shine = tapered_curve([(x + rad * 0.62 * math.cos(math.radians(d)), y + rad * 0.62 * math.sin(math.radians(d)))
+                               for d in range(200, 255, 5)], rad * 0.14, 0.3, 0.3)
+        return c.union(shine)
+
+    for mk_, md, ja in [(mk_flower, 15, "花"), (mk_heart, 13, "ハート"), (mk_bubble, 12, "シャボン玉")]:
+        for sk in ["tate", "yoko", "sq"]:
+            w, h, _ = SIZES[sk]
+            item(cat, "kk_chirashi", "散らし_" + ja, sk).add(scatter(w, h, md, mk_, rng("sc", ja, sk)))
+
+    # 14 網点トーン（60線・45度）
+    cat = "14_tone"
+    for pct in [10, 20, 30, 40, 50]:
+        item(cat, "kk_tone", "網点_{}％".format(pct), "sq").add(dot_tone(120, 120, lambda x, y, p=pct: p / 100))
+    for sk, ja, fn in [("tate", "グラデ_上濃い", lambda x, y: 0.55 * (1 - y / 220) ** 1.2),
+                       ("tate", "グラデ_下濃い", lambda x, y: 0.55 * (y / 220) ** 1.2),
+                       ("yoko", "グラデ_左濃い", lambda x, y: 0.55 * (1 - x / 150) ** 1.2),
+                       ("sq", "グラデ_円形", lambda x, y: 0.5 * min(1, math.hypot(x - 60, y - 60) / 70) ** 1.3)]:
+        item(cat, "kk_tone", "網点" + ja, sk).add(dot_tone(SIZES[sk][0], SIZES[sk][1], fn))
+    item(cat, "kk_tone", "砂目_淡", "sq").add(sand_tone(120, 120, 9, 0.075, rng("sand1")))
+    item(cat, "kk_tone", "砂目_濃", "sq").add(sand_tone(120, 120, 20, 0.085, rng("sand2")))
+    item(cat, "kk_tone", "砂目_グラデ", "tate").add(sand_tone(150, 220, 20, 0.085, rng("sand3"), frac=lambda x, y: (1 - y / 220) ** 1.5))
+
+    # 15 稲妻
+    cat = "15_inazuma"
+    for si, ja in enumerate(["1本", "2本", "3本"]):
+        for sk in ["tate", "yoko"]:
+            w, h, _ = SIZES[sk]
+            r = rng("bolt", si, sk)
+            parts = []
+            for k in range(si + 1):
+                x0 = w * (0.2 + 0.6 * (k + 0.5) / (si + 1)) + r.uniform(-10, 10)
+                parts.append(lightning((x0, -3), (x0 + r.uniform(-25, 25), h * r.uniform(0.75, 1.0)), 6.0 if si == 0 else 4.8, r))
+            item(cat, "kk_inazuma", "稲妻_" + ja, sk).add(unary_union(parts))
+
+    # 16 波線（ゆらゆら・寒気・恐怖）
+    cat = "16_namisen"
+    for si, (n, amp, wl, lw, vert, ja) in enumerate([(26, 1.4, 14, 0.5, False, "横ゆらゆら"), (40, 0.8, 8, 0.35, False, "横こまかい"),
+                                                    (24, 1.6, 16, 0.55, True, "縦ゆらゆら_寒気")]):
+        for sk in ["tate", "yoko"]:
+            w, h, _ = SIZES[sk]
+            nn = int(n * (w if vert else h) / 150)
+            item(cat, "kk_nami", "波線_" + ja, sk).add(wavy_lines(w, h, max(10, nn), amp, wl, lw, rng("wave", si, sk), vert))
 
     for it in ITEMS:
         it.path = it.save()

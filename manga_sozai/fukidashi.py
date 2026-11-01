@@ -197,6 +197,8 @@ class Item:
         cv = fit_canvas(geoms, margin=1.5)
         for g, c in self.layers:
             cv.add(g, c)
+        # 本体の中心（形は原点中心で作っている）＝セリフを置く位置. mm単位・キャンバス左上基準
+        self.anchor = (round(cv.ox, 2), round(cv.oy, 2), round(cv.w, 2), round(cv.h, 2))
         base = os.path.join(OUT, self.cat, self.name)
         cv.save(base)
         return base + ".svg"
@@ -529,9 +531,155 @@ def build():
         c2 = LineString([(w / 2, h / 2 - k), (w / 2, h / 2), (w / 2 - k, h / 2)]).buffer(LW / 2, cap_style="flat", join_style="mitre")
         it.layers += [(S, WHITE), (unary_union([c1, c2]), BLACK)]
 
+    # 01 追加: 上向きの尻尾・細長・ちび
+    cat = "01_normal"
+    i = sum(1 for it in ITEMS if it.cat == cat)
+    for dk in [None, "LD", "RD"]:
+        i += 1
+        S = body_ellipse(9.5, 27)
+        if dk:
+            S = tail(S, DIRS[dk][0], L=10, bw=5, bend={"LD": 0.35, "RD": -0.35}[dk])
+        add(cat, "fk_normal_{:03d}".format(i), "細長_長ゼリフ用_{}".format("尻尾" + DIRS[dk][1] if dk else "尻尾なし")).white_lined(S)
+    for dk in [None, "LD", "RD"]:
+        i += 1
+        S = body_ellipse(8, 10.5)
+        if dk:
+            S = tail(S, DIRS[dk][0], L=6, bw=4, bend={"LD": 0.35, "RD": -0.35}[dk])
+        add(cat, "fk_normal_{:03d}".format(i), "ちび_ひとこと用_{}".format("尻尾" + DIRS[dk][1] if dk else "尻尾なし")).white_lined(S)
+
+    # 13 特殊・演出
+    cat = "13_special"
+    i = 0
+    import manpu as _mp
+    from sozai import sparkle as _sp, tapered as _tp
+
+    def drips(S, r, k=4, depth=(4, 11)):
+        minx, miny, maxx, maxy = S.bounds
+        parts = [S]
+        xs = sorted(r.uniform(minx * 0.6, maxx * 0.6) for _ in range(k))
+        for x in xs:
+            yb = ray_hit(S, math.atan2(maxy, x if x else 1e-3))[1]
+            L = r.uniform(*depth)
+            w = r.uniform(2.0, 3.2)
+            parts.append(Polygon([(x - w / 2, yb - 3), (x + w / 2, yb - 3), (x + w / 2, yb + L), (x - w / 2, yb + L)]))
+            parts.append(Point(x, yb + L).buffer(w / 2 * 1.15, quad_segs=16))
+        return closing(unary_union(parts), 1.4)
+
+    def icicles(S, r, k=7):
+        minx, miny, maxx, maxy = S.bounds
+        parts = [S]
+        for j in range(k):
+            x = minx * 0.75 + (maxx * 0.75 - minx * 0.75) * (j + 0.5) / k
+            yb = ray_hit(S, math.atan2(maxy, x if x else 1e-3))[1]
+            L = r.uniform(4, 9)
+            w = r.uniform(2.4, 3.6)
+            parts.append(Polygon([(x - w / 2, yb - 2), (x + w / 2, yb - 2), (x + r.uniform(-0.4, 0.4), yb + L)]))
+        return unary_union(parts).buffer(0)
+
+    for ak in ["tate", "yoko"]:
+        a, b, aj = ASPECT[ak]
+        S = drips(body_wobble(a, b, rng("dro", ak), amp=0.03), rng("drip", ak))
+        i += 1
+        add(cat, "fk_special_{:03d}".format(i), "ドロドロ_恐怖_{}".format(aj)).white_lined(S)
+        i += 1
+        add(cat, "fk_special_{:03d}".format(i), "ドロドロ_恐怖_ベタ_{}".format(aj)).layers.append((S, BLACK))
+        S = icicles(body_ellipse(a, b), rng("ice", ak))
+        i += 1
+        add(cat, "fk_special_{:03d}".format(i), "つらら_冷たい_{}".format(aj)).white_lined(S)
+    for ak in ["tate", "maru", "yoko"]:
+        a, b, aj = ASPECT[ak]
+        r = rng("dbl", ak)
+        S = body_spiky(a, b, 14, 0.32, r, irregular=0.4)
+        inner = body_spiky(a * 0.8, b * 0.8, 14, 0.28, rng("dbl2", ak), irregular=0.4)
+        i += 1
+        it = add(cat, "fk_special_{:03d}".format(i), "爆発二重トゲ_{}".format(aj))
+        it.white_lined(S)
+        it.layers.append((outline_ring(inner, LW * 0.8), BLACK))
+    for ak in ["tate", "yoko"]:
+        a, b, aj = ASPECT[ak]
+        r = rng("uniS", ak)
+        S = body_spiky(a, b, 16, 0.25, r, irregular=0.3)
+        lines = []
+        for j in range(44):
+            th = 2 * math.pi * j / 44 + r.uniform(-0.03, 0.03)
+            r0 = 1.45 + r.uniform(0, 0.12)
+            r1 = r0 + r.uniform(0.18, 0.4)
+            lines.append(_tp((a * r1 * math.cos(th), b * r1 * math.sin(th)), (a * r0 * math.cos(th), b * r0 * math.sin(th)), 0.7, 0.0))
+        i += 1
+        it = add(cat, "fk_special_{:03d}".format(i), "叫び＋ウニ線_{}".format(aj))
+        it.white_lined(S)
+        it.layers.append((unary_union(lines), BLACK))
+    for k, ja in [(5, "星形"), (8, "八方星")]:
+        from sozai import star as _star
+        S = _star(22, 12 if k == 5 else 15, k).buffer(1.2, join_style="round").buffer(-0.6)
+        i += 1
+        add(cat, "fk_special_{:03d}".format(i), ja).white_lined(S)
+    for ak in ["tate", "yoko"]:
+        a, b, aj = ASPECT[ak]
+        S = body_ellipse(a, b)
+        lines = []
+        for th_deg in list(range(-170, -10, 18)):
+            th = math.radians(th_deg)
+            lines.append(_tp((a * 1.42 * math.cos(th), b * 1.32 * math.sin(th)), (a * 1.14 * math.cos(th), b * 1.1 * math.sin(th)), 0.9, 0.0))
+        i += 1
+        it = add(cat, "fk_special_{:03d}".format(i), "強調線つき_{}".format(aj))
+        it.white_lined(S)
+        it.layers.append((unary_union(lines), BLACK))
+    for ak in ["tate", "yoko"]:
+        a, b, aj = ASPECT[ak]
+        S = tail(body_ellipse(a, b), DIRS["LD"][0], L=10, bw=6, bend=0.35)
+        i += 1
+        it = add(cat, "fk_special_{:03d}".format(i), "汗つき_焦り_{}".format(aj))
+        it.white_lined(S)
+        for d_ in [_mp.drop(7, a * 0.95, -b * 0.95, 20), _mp.drop(4.5, a * 1.28, -b * 0.62, 35)]:
+            it.layers += [(d_, WHITE), (outline_ring(d_, LW), BLACK)]
+        S = body_spiky(a, b, 14, 0.28, rng("angS", ak), irregular=0.5)
+        i += 1
+        it = add(cat, "fk_special_{:03d}".format(i), "怒りマークつき_{}".format(aj))
+        it.white_lined(S)
+        am = affinity.translate(_mp.anger(10), a * 1.05, -b * 1.0)
+        it.layers += [(am.buffer(0.8), WHITE), (am, BLACK)]
+        S = tail(body_wobble(a, b, rng("song", ak), amp=0.035), DIRS["RD"][0], L=10, bw=6, bend=-0.35)
+        i += 1
+        it = add(cat, "fk_special_{:03d}".format(i), "音符つき_歌_{}".format(aj))
+        it.white_lined(S)
+        for nn in [affinity.translate(_mp.note(8), -a * 1.05, -b * 0.9), affinity.translate(_mp.note(6, double=False), -a * 1.35, -b * 0.35)]:
+            it.layers += [(nn.buffer(0.7), WHITE), (nn, BLACK)]
+        S = body_ellipse(a, b)
+        i += 1
+        it = add(cat, "fk_special_{:03d}".format(i), "キラキラ添え_{}".format(aj))
+        it.white_lined(S)
+        for sp in [_sp(5, a * 0.98, -b * 0.92), _sp(3, a * 1.22, -b * 0.55), _sp(3.5, -a * 1.0, b * 0.8)]:
+            it.layers += [(sp.buffer(0.8), WHITE), (sp, BLACK)]
+    for ak in ["tate", "yoko"]:
+        a, b, aj = ASPECT[ak]
+        S1 = body_wobble(a, b, rng("drunk", ak), amp=0.07, k=4)
+        S2 = affinity.rotate(body_wobble(a * 0.98, b * 0.98, rng("drunk2", ak), amp=0.07, k=4), 8, origin=(0, 0))
+        i += 1
+        it = add(cat, "fk_special_{:03d}".format(i), "ゆらゆら_酔い_{}".format(aj))
+        it.layers += [(S1.union(S2), WHITE), (outline_ring(S1, LW), BLACK), (outline_ring(S2, LW * 0.7).difference(S1.buffer(-LW)), BLACK)]
+    for ak in ["tate", "yoko"]:
+        a, b, aj = ASPECT[ak]
+        r = rng("kaku", ak)
+        pts = []
+        k = 11
+        for j in range(k):
+            th = 2 * math.pi * (j + r.uniform(-0.2, 0.2)) / k
+            m = r.uniform(0.92, 1.12)
+            pts.append((a * m * math.cos(th), b * m * math.sin(th)))
+        S = Polygon(pts).buffer(0)
+        i += 1
+        add(cat, "fk_special_{:03d}".format(i), "カクカク_いらだち_{}".format(aj)).white_lined(S)
+        i += 1
+        add(cat, "fk_special_{:03d}".format(i), "カクカク_いらだち_尻尾_{}".format(aj)).white_lined(
+            spike_tail(S, DIRS["LD"][0], L=10, bw=5))
+
     for it in ITEMS:
         it.path = it.save()
         n += 1
+    import json
+    with open(os.path.join(OUT, "anchors.json"), "w", encoding="utf-8") as f:
+        json.dump({it.name: it.anchor for it in ITEMS}, f, ensure_ascii=False, indent=0)
     return ITEMS
 
 

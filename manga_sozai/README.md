@@ -1,12 +1,13 @@
-# 漫画素材シリーズ（吹き出し集・効果線集・漫符集）
+# 漫画素材シリーズ（吹き出し集・効果線集・漫符集・成人向けエフェクト集）
 
 コマ割り集（BOOTH販売中）の関連商品として作った素材集です。すべてPythonで生成しています。
 
 | セット | 種類 | zip |
 |---|---|---|
-| 吹き出し集 | 270種・12分類 | `fukidashi_完成版.zip`（約12MB） |
-| 効果線集 | 124種・10分類 | `kouka_完成版.zip`（約93MB） |
-| 漫符集 | 118種・7分類 | `manpu_完成版.zip`（約2MB） |
+| 吹き出し集 | 305種・13分類 | `fukidashi_完成版.zip` |
+| 効果線集 | 178種・16分類 | `kouka_完成版_1_線・フラッシュ.zip` ＋ `kouka_完成版_2_背景・トーン.zip` |
+| 漫符集 | 147種・8分類 | `manpu_完成版.zip` |
+| 成人向けエフェクト集（R18） | 115種・7分類 | `seijin_完成版.zip` |
 
 - 商品ページ用の画像は `product_images/` にあります（表紙は日本語版と英語版、SAMPLE透かし入りのサンプル、セット表紙、使用例ページ）。
 - 出品用の文面と価格のめやすは `出品テキスト.md` にあります。
@@ -15,11 +16,11 @@
 
 ```
 pip install cairosvg shapely pillow
-python3 package.py      # 生成 → zip(dist/) → 商品画像(product_images/)
+python3 package.py      # 生成 → zip(dist/) → 商品画像(product_images/)  ※全部で15分ほど
 ```
 
 - `sozai.py`：共通処理です。形をmm単位で作り、塗りだけのSVGとして書き出し、cairosvgで600dpiのPNGにします。
-- `fukidashi.py`／`kouka.py`／`manpu.py`：各セットのカタログです。種類を増やすときはここに追記します。
+- `fukidashi.py`／`kouka.py`／`manpu.py`／`seijin.py`：各セットのカタログです。種類を増やすときはここに追記します。
 - 乱数はシードを固定しているので、何度生成しても同じ形になります。
 - `fonts/` には表紙用のフォント（Noto Sans JP・Dela Gothic One、どちらもSIL OFL）が入っています。素材そのものには文字を使っていません。
 
