@@ -477,7 +477,7 @@ def overview(key, total):
             else:
                 art = fit_render(p, sub - 20, cellh - 30)
                 im.paste(art, (x0 + 10 + j * sub + (sub - art.width) // 2, y0 + (cellh - art.height) // 2), art)
-        text_center(d, x0 + cellw / 2, y0 + cellh + 6, SETS[key]["cats"][c][0], font(FONT_BOLD, 30), INK)
+        text_center(d, x0 + cellw / 2, y0 + cellh + 6, SETS[key]["cats"][c][0].split("（")[0], font(FONT_BOLD, 30), INK)
     im = watermark(im)
     out = os.path.join(IMG, "{}_sample_1_overview.png".format(key))
     im.save(out, optimize=True)
