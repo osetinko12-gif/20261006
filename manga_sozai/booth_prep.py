@@ -34,9 +34,18 @@ PRODUCTS = [
         "zips": ["fukidashi_完成版.zip", "kouka_完成版_1_線・フラッシュ.zip", "kouka_完成版_2_背景・トーン.zip",
                  "manpu_完成版.zip", "love_effect_完成版.zip"],
         "images": [("表紙", "bundle_cover.png"), ("使用例", "set_usage_example.png"),
-                   ("吹き出し集", "fukidashi_sample_1_overview.png"), ("効果線集", "kouka_sample_1_overview.png"),
-                   ("漫符集", "manpu_sample_1_overview.png"), ("恋愛お色気", "seijin_sample_1_overview.png"),
-                   ("吹き出しサンプル", "fukidashi_sample_2.png"), ("効果線サンプル", "kouka_sample_4.png")],
+                   ("吹き出し集_表紙", "fukidashi_cover.png"), ("効果線集_表紙", "kouka_cover.png"),
+                   ("漫符集_表紙", "manpu_cover.png"), ("恋愛お色気_表紙", "seijin_cover.png"),
+                   ("吹き出し集_全分類", "fukidashi_sample_1_overview.png"), ("効果線集_全分類", "kouka_sample_1_overview.png"),
+                   ("漫符集_全分類", "manpu_sample_1_overview.png"), ("恋愛お色気_全分類", "seijin_sample_1_overview.png"),
+                   ("吹き出し集_サンプル1", "fukidashi_sample_2.png"), ("吹き出し集_サンプル2", "fukidashi_sample_3.png"),
+                   ("吹き出し集_サンプル3", "fukidashi_sample_4.png"),
+                   ("効果線集_サンプル1", "kouka_sample_2.png"), ("効果線集_サンプル2", "kouka_sample_3.png"),
+                   ("効果線集_サンプル3", "kouka_sample_4.png"),
+                   ("漫符集_サンプル1", "manpu_sample_2.png"), ("漫符集_サンプル2", "manpu_sample_3.png"),
+                   ("漫符集_サンプル3", "manpu_sample_4.png"),
+                   ("恋愛お色気_サンプル1", "seijin_sample_2.png"), ("恋愛お色気_サンプル2", "seijin_sample_3.png"),
+                   ("恋愛お色気_サンプル3", "seijin_sample_4.png")],
         "tags": ["漫画素材", "吹き出し", "効果線", "集中線", "漫符", "フキダシ", "トーン", "クリスタ", "素材集", "同人誌"],
         "desc": """「コマは割れた。でも、吹き出しがいつも同じ形になってしまう」
 「集中線を1本ずつ引くのがしんどい」
@@ -781,7 +790,7 @@ def main():
         for z in p["zips"]:
             shutil.copy(os.path.join(DIST, z), os.path.join(d, "アップロードするzip", z))
         for i, (lab, fn) in enumerate(p["images"]):
-            shutil.copy(os.path.join(IMG, fn), os.path.join(d, "画像_この順で登録", "{}_{}.png".format(i + 1, lab)))
+            shutil.copy(os.path.join(IMG, fn), os.path.join(d, "画像_この順で登録", "{:02d}_{}.png".format(i + 1, lab)))
         desc = p["desc"].format(apps=APPS, terms=TERMS, set_link=SET_LINK)
         txt = ["【商品名】", p["title"], "",
                "【価格】", "{}円".format(p["price"]) if p["price"] else "0円（無料）", "",
